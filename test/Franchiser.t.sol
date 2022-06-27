@@ -1,9 +1,9 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+// SPDX-License-Identifier: GPL-3.0-or-later
+pragma solidity 0.8.15;
 
 import "forge-std/Test.sol";
 
-contract ContractTest is Test {
+contract FranchiserTest is Test {
     function setUp() public {}
 
     function testExample() public {
