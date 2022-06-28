@@ -1,24 +1,25 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8;
 
-import {IFranchiserEvents} from "./IFranchiserEvents.sol";
-import {IFranchiserErrors} from "./IFranchiserErrors.sol";
-import {IVotingToken} from "./IVotingToken.sol";
+import {IOwnedBeneficiaryErrors} from "./IOwnedBeneficiaryErrors.sol";
+import {IOwnedBeneficiaryEvents} from "./IOwnedBeneficiaryEvents.sol";
+import {IFranchiserImmutableState} from "../IFranchiserImmutableState.sol";
 
-/// @title The interface for the Franchiser contract.
-interface IFranchiser is IFranchiserEvents, IFranchiserErrors {
-    /// @notice The `votingToken` of the contract.
-    /// @return votingToken The `votingToken`.
-    function votingToken() external returns (IVotingToken votingToken);
-
+/// @title Interface for the OwnedBeneficiary contract.
+interface IOwnedBeneficiary is
+    IOwnedBeneficiaryErrors,
+    IOwnedBeneficiaryEvents,
+    IFranchiserImmutableState
+{
     /// @notice The current `beneficiary` of the contract.
+    /// @dev Cannot be immutable beacuse this contract is used via EIP-1167 clones.
     /// @return beneficiary The `beneficiary`.
     function beneficiary() external returns (address beneficiary);
 
-    /// @notice Changes the `beneficiary` of the contract.
+    /// @notice Can be called once to set the contract's `beneficiary`.
     /// @dev Can only be called by the `owner`.
-    /// @param newBeneficiary The new `beneficiary`.
-    function changeBeneficiary(address newBeneficiary) external;
+    /// @param beneficiary The `beneficiary`.
+    function initialize(address beneficiary) external;
 
     /// @notice Delegates the contract's balance of `votingToken` to `delegatee`.
     /// @dev Can only be called by the `beneficiary`.
