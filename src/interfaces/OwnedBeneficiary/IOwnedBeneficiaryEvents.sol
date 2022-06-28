@@ -3,7 +3,8 @@ pragma solidity ^0.8;
 
 /// @title Events for the OwnedBeneficiary contract.
 interface IOwnedBeneficiaryEvents {
-    /// @notice Emitted once per OwnedBeneficiary, when a `beneficiary` is set.
+    /// @notice Emitted once per OwnedBeneficiary.
+    /// @param owner The `owner`.
     /// @param beneficiary The `beneficiary`.
-    event Initialized(address indexed beneficiary);
+    event Initialized(address indexed owner, address indexed beneficiary);
 }

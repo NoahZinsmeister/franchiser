@@ -17,9 +17,10 @@ interface IOwnedBeneficiary is
     function beneficiary() external returns (address beneficiary);
 
     /// @notice Can be called once to set the contract's `beneficiary`.
-    /// @dev Can only be called by the `owner`.
+    ///         Intended to be used in the context of
+    /// @param owner The `owner`.
     /// @param beneficiary The `beneficiary`.
-    function initialize(address beneficiary) external;
+    function initialize(address owner, address beneficiary) external;
 
     /// @notice Delegates the contract's balance of `votingToken` to `delegatee`.
     /// @dev Can only be called by the `beneficiary`.

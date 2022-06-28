@@ -20,10 +20,9 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
     constructor(IVotingToken votingToken)
         FranchiserImmutableState(votingToken)
     {
-        // because this contract is the owner of the implementation contract,
-        // we can safely skip initialization, as it is impossible to trigger
-        // a call to initialize the implementation.
         franchiserImplementation = new Franchiser(votingToken);
+        // bork the implementation contract
+        franchiserImplementation.initialize(address(0), address(1));
     }
 
     function getSalt(address owner, address beneficiary)
@@ -62,7 +61,7 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
                     getSalt(msg.sender, beneficiary)
                 )
             );
-            franchiser.initialize(beneficiary);
+            franchiser.initialize(address(this), beneficiary);
             _franchisers[msg.sender][beneficiary] = franchiser;
             emit NewFranchiser(msg.sender, beneficiary, franchiser);
         }

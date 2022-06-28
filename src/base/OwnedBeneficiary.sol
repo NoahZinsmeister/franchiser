@@ -14,29 +14,37 @@ abstract contract OwnedBeneficiary is
 {
     using SafeTransferLib for ERC20;
 
-    /// @inheritdoc IOwnedBeneficiary
-    address public beneficiary;
+    address private _beneficiary;
 
     /// @dev Reverts if called by any account other than the `beneficiary`.
     modifier onlyBeneficiary() {
-        if (msg.sender != beneficiary)
-            revert NotBeneficiary(msg.sender, beneficiary);
+        if (msg.sender != _beneficiary)
+            revert NotBeneficiary(msg.sender, _beneficiary);
         _;
     }
 
     constructor(IVotingToken votingToken)
         FranchiserImmutableState(votingToken)
-        Owned(msg.sender)
+        Owned(address(0))
     {}
 
     /// @inheritdoc IOwnedBeneficiary
-    function initialize(address beneficiary_) external onlyOwner {
+    function beneficiary() external view returns (address) {
+        return _beneficiary;
+    }
+
+    /// @inheritdoc IOwnedBeneficiary
+    function initialize(address owner_, address beneficiary_) external {
+        // the following two conditions, along with the fact
+        // that _beneficiary is private and only set below,
+        // ensure that intialize can only be called once
         if (beneficiary_ == address(0)) revert ZeroBeneficiary();
-        if (beneficiary != address(0)) revert AlreadyInitialized();
-        beneficiary = beneficiary_;
-        emit Initialized(beneficiary);
+        if (_beneficiary != address(0)) revert AlreadyInitialized();
+        owner = owner_;
+        _beneficiary = beneficiary_;
+        emit Initialized(owner_, beneficiary_);
         // self-delegate by default
-        _delegate(beneficiary_);
+        _delegate(_beneficiary);
     }
 
     /// @inheritdoc IOwnedBeneficiary
