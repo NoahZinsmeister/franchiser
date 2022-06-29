@@ -4,8 +4,8 @@ pragma solidity 0.8.15;
 import {Test} from "forge-std/Test.sol";
 import {IFranchiserFactoryEvents} from "../src/interfaces/FranchiserFactory/IFranchiserFactoryEvents.sol";
 import {VotingTokenConcrete} from "./VotingTokenConcrete.sol";
-import {FranchiserFactory} from "../src/FranchiserFactory.sol";
 import {IVotingToken} from "../src/interfaces/IVotingToken.sol";
+import {FranchiserFactory} from "../src/FranchiserFactory.sol";
 import {Franchiser} from "../src/Franchiser.sol";
 
 contract FranchiserFactoryTest is Test, IFranchiserFactoryEvents {
@@ -23,6 +23,7 @@ contract FranchiserFactoryTest is Test, IFranchiserFactoryEvents {
     }
 
     function testSetUp() public {
+        assertEq(franchiserFactory.initialMaximumSubDelegatees(), 8);
         assertEq(
             franchiserFactory.franchiserImplementation().owner(),
             address(0)
