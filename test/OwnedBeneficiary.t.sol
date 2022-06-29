@@ -7,6 +7,7 @@ import {IVotingToken} from "../src/interfaces/IVotingToken.sol";
 import {IOwnedBeneficiaryErrors} from "../src/interfaces/OwnedBeneficiary/IOwnedBeneficiaryErrors.sol";
 import {IOwnedBeneficiaryEvents} from "../src/interfaces/OwnedBeneficiary/IOwnedBeneficiaryEvents.sol";
 import {VotingTokenConcrete} from "./VotingTokenConcrete.sol";
+import {Clones} from "openzeppelin-contracts/contracts/proxy/Clones.sol";
 
 contract OwnedBeneficiaryConcrete is OwnedBeneficiary {
     constructor(IVotingToken votingToken) OwnedBeneficiary(votingToken) {}
@@ -17,6 +18,8 @@ contract OwnedBeneficiaryTest is
     IOwnedBeneficiaryErrors,
     IOwnedBeneficiaryEvents
 {
+    using Clones for address;
+
     address private constant alice = 0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa;
     address private constant bob = 0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB;
     address private constant carol = 0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC;
@@ -27,14 +30,25 @@ contract OwnedBeneficiaryTest is
     function setUp() public {
         votingToken = new VotingTokenConcrete();
         vm.prank(alice);
-        ownedBeneficiary = new OwnedBeneficiaryConcrete(
-            IVotingToken(address(votingToken))
+        // we need to set this up as a clone to work
+        ownedBeneficiary = OwnedBeneficiaryConcrete(
+            address(
+                new OwnedBeneficiaryConcrete(IVotingToken(address(votingToken)))
+            ).clone()
         );
     }
 
     function testSetUp() public {
         assertEq(ownedBeneficiary.owner(), address(0));
         assertEq(ownedBeneficiary.beneficiary(), address(0));
+    }
+
+    function testImplementationBroken() public {
+        OwnedBeneficiaryConcrete ownedBeneficiaryConcrete = new OwnedBeneficiaryConcrete(
+                IVotingToken(address(0))
+            );
+        assertEq(ownedBeneficiaryConcrete.owner(), address(0));
+        assertEq(ownedBeneficiaryConcrete.beneficiary(), address(1));
     }
 
     function testInitializeRevertsZeroBeneficiary() public {

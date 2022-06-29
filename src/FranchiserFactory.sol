@@ -3,26 +3,31 @@ pragma solidity 0.8.15;
 
 import {IFranchiserFactory} from "./interfaces/FranchiserFactory/IFranchiserFactory.sol";
 import {FranchiserImmutableState} from "./base/FranchiserImmutableState.sol";
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 import {Clones} from "openzeppelin-contracts/contracts/proxy/Clones.sol";
 import {SafeTransferLib, ERC20} from "solmate/utils/SafeTransferLib.sol";
 import {IVotingToken} from "./interfaces/IVotingToken.sol";
 import {Franchiser} from "./Franchiser.sol";
+import {SubFranchiser} from "./SubFranchiser.sol";
 
 contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
+    using Address for address;
     using Clones for address;
     using SafeTransferLib for ERC20;
 
     /// @inheritdoc IFranchiserFactory
     Franchiser public immutable franchiserImplementation;
-
-    mapping(address => mapping(address => Franchiser)) private _franchisers;
+    /// @inheritdoc IFranchiserFactory
+    SubFranchiser public immutable subFranchiserImplementation;
 
     constructor(IVotingToken votingToken)
         FranchiserImmutableState(votingToken)
     {
-        franchiserImplementation = new Franchiser(votingToken);
-        // bork the implementation contract
-        franchiserImplementation.initialize(address(0), address(1));
+        subFranchiserImplementation = new SubFranchiser(votingToken);
+        franchiserImplementation = new Franchiser(
+            votingToken,
+            subFranchiserImplementation
+        );
     }
 
     function getSalt(address owner, address beneficiary)
@@ -34,8 +39,8 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
     }
 
     /// @inheritdoc IFranchiserFactory
-    function franchisers(address owner, address beneficiary)
-        external
+    function getFranchiser(address owner, address beneficiary)
+        public
         view
         returns (Franchiser)
     {
@@ -53,16 +58,15 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
         public
         returns (Franchiser franchiser)
     {
-        franchiser = _franchisers[msg.sender][beneficiary];
+        franchiser = getFranchiser(msg.sender, beneficiary);
         // deploy a new contract if necessary
-        if (address(franchiser) == address(0)) {
+        if (!address(franchiser).isContract()) {
             franchiser = Franchiser(
                 address(franchiserImplementation).cloneDeterministic(
                     getSalt(msg.sender, beneficiary)
                 )
             );
             franchiser.initialize(address(this), beneficiary);
-            _franchisers[msg.sender][beneficiary] = franchiser;
             emit NewFranchiser(msg.sender, beneficiary, franchiser);
         }
 
@@ -75,8 +79,8 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
 
     /// @inheritdoc IFranchiserFactory
     function recall(address beneficiary, address to) external {
-        Franchiser franchiser = _franchisers[msg.sender][beneficiary];
-        if (address(franchiser) != address(0)) franchiser.recall(to);
+        Franchiser franchiser = getFranchiser(msg.sender, beneficiary);
+        if (address(franchiser).isContract()) franchiser.recall(to);
     }
 
     /// @inheritdoc IFranchiserFactory

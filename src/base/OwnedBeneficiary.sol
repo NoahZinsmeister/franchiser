@@ -26,7 +26,11 @@ abstract contract OwnedBeneficiary is
     constructor(IVotingToken votingToken)
         FranchiserImmutableState(votingToken)
         Owned(address(0))
-    {}
+    {
+        // this borks any implementation contracts, which is what we want,
+        // as inheritors should only be used via cloning.
+        _beneficiary = address(1);
+    }
 
     /// @inheritdoc IOwnedBeneficiary
     function beneficiary() external view returns (address) {
@@ -36,8 +40,8 @@ abstract contract OwnedBeneficiary is
     /// @inheritdoc IOwnedBeneficiary
     function initialize(address owner_, address beneficiary_) external {
         // the following two conditions, along with the fact
-        // that _beneficiary is private and only set below,
-        // ensure that intialize can only be called once
+        // that _beneficiary is private and only set below (outside of the constructor),
+        // ensures that intialize can only be called once in clones
         if (beneficiary_ == address(0)) revert ZeroBeneficiary();
         if (_beneficiary != address(0)) revert AlreadyInitialized();
         owner = owner_;
@@ -57,7 +61,7 @@ abstract contract OwnedBeneficiary is
     }
 
     /// @inheritdoc IOwnedBeneficiary
-    function recall(address to) external onlyOwner {
+    function recall(address to) public virtual onlyOwner {
         ERC20(address(votingToken)).safeTransfer(
             to,
             votingToken.balanceOf(address(this))

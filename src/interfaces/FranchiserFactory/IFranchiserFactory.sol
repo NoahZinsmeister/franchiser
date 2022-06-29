@@ -4,6 +4,7 @@ pragma solidity ^0.8;
 import {IFranchiserFactoryEvents} from "./IFranchiserFactoryEvents.sol";
 import {IFranchiserImmutableState} from "../IFranchiserImmutableState.sol";
 import {Franchiser} from "../../Franchiser.sol";
+import {SubFranchiser} from "../../SubFranchiser.sol";
 
 /// @title Interface for the FranchiserFactory contract.
 interface IFranchiserFactory is
@@ -18,13 +19,21 @@ interface IFranchiserFactory is
         view
         returns (Franchiser franchiserImplementation);
 
+    /// @notice The implementation contract used to clone SubFranchiser contracts.
+    /// @dev Used as part of an EIP-1167 proxy minimal proxy setup.
+    /// @return subFranchiserImplementation The SubFranchiser implementation contract.
+    function subFranchiserImplementation()
+        external
+        view
+        returns (SubFranchiser subFranchiserImplementation);
+
     /// @notice Looks up the Franchiser associated with the `owner` and `beneficiary`.
     /// @dev Returns the address of the Franchiser even it it does not yet exist,
     ///      thanks to CREATE2.
     /// @param owner The target `owner`.
     /// @param beneficiary The target `beneficiary`.
     /// @return franchiser The Franchiser contract, whether or not it exists yet.
-    function franchisers(address owner, address beneficiary)
+    function getFranchiser(address owner, address beneficiary)
         external
         view
         returns (Franchiser franchiser);

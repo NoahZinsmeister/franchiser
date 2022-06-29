@@ -34,7 +34,7 @@ contract OwnedBeneficiaryTest is Test, IFranchiserFactoryEvents {
     }
 
     function testFundZero() public {
-        Franchiser expectedFranchiser = franchiserFactory.franchisers(
+        Franchiser expectedFranchiser = franchiserFactory.getFranchiser(
             alice,
             bob
         );

@@ -24,11 +24,11 @@ interface IOwnedBeneficiary is
 
     /// @notice Delegates the contract's balance of `votingToken` to `delegatee`.
     /// @dev Can only be called by the `beneficiary`.
-    /// @param delegatee The address that will recieve voting power.
+    /// @param delegatee The address that will receive voting power.
     function delegate(address delegatee) external;
 
     /// @notice Transfers the contract's balance of `votingToken` to `to`.
     /// @dev Can only be called by the `owner`.
-    /// @param to The address that will recieve tokens.
+    /// @param to The address that will receive tokens.
     function recall(address to) external;
 }
