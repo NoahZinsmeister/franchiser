@@ -16,6 +16,11 @@ abstract contract OwnedDelegator is
 
     address private _delegatee;
 
+    /// @inheritdoc IOwnedDelegator
+    function delegatee() external view returns (address) {
+        return _delegatee;
+    }
+
     /// @dev Reverts if called by any account other than the `delegatee`.
     modifier onlyDelegatee() {
         if (msg.sender != _delegatee)
@@ -27,18 +32,13 @@ abstract contract OwnedDelegator is
         FranchiserImmutableState(votingToken)
         Owned(address(0))
     {
-        // this borks any implementation contracts, which is what we want,
-        // as inheritors should only be used via cloning.
+        // this borks the implementation contract as desired,
+        // new instances should be cloned.
         _delegatee = address(1);
     }
 
     /// @inheritdoc IOwnedDelegator
-    function delegatee() external view returns (address) {
-        return _delegatee;
-    }
-
-    /// @inheritdoc IOwnedDelegator
-    function initialize(address owner_, address delegatee_) external {
+    function initialize(address owner_, address delegatee_) public {
         // the following two conditions, along with the fact
         // that _delegatee is private and only set below (outside of the constructor),
         // ensures that intialize can only be called once in clones

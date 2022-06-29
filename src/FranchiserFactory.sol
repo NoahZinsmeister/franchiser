@@ -8,7 +8,6 @@ import {Clones} from "openzeppelin-contracts/contracts/proxy/Clones.sol";
 import {SafeTransferLib, ERC20} from "solmate/utils/SafeTransferLib.sol";
 import {IVotingToken} from "./interfaces/IVotingToken.sol";
 import {Franchiser} from "./Franchiser.sol";
-import {SubFranchiser} from "./SubFranchiser.sol";
 
 contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
     using Address for address;
@@ -16,17 +15,15 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
     using SafeTransferLib for ERC20;
 
     /// @inheritdoc IFranchiserFactory
-    Franchiser public immutable franchiserImplementation;
+    uint256 public constant initialMaximumSubDelegatees = 8;
+
     /// @inheritdoc IFranchiserFactory
-    SubFranchiser public immutable subFranchiserImplementation;
+    Franchiser public immutable franchiserImplementation;
 
     constructor(IVotingToken votingToken)
         FranchiserImmutableState(votingToken)
     {
-        franchiserImplementation = new Franchiser(
-            votingToken,
-            subFranchiserImplementation = new SubFranchiser(votingToken)
-        );
+        franchiserImplementation = new Franchiser(votingToken);
     }
 
     function getSalt(address owner, address delegatee)
@@ -65,7 +62,11 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
                     getSalt(msg.sender, delegatee)
                 )
             );
-            franchiser.initialize(address(this), delegatee);
+            franchiser.initialize(
+                address(this),
+                delegatee,
+                initialMaximumSubDelegatees
+            );
             emit NewFranchiser(msg.sender, delegatee, franchiser);
         }
 

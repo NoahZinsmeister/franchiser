@@ -4,13 +4,20 @@ pragma solidity ^0.8;
 import {IFranchiserFactoryEvents} from "./IFranchiserFactoryEvents.sol";
 import {IFranchiserImmutableState} from "../IFranchiserImmutableState.sol";
 import {Franchiser} from "../../Franchiser.sol";
-import {SubFranchiser} from "../../SubFranchiser.sol";
 
 /// @title Interface for the FranchiserFactory contract.
 interface IFranchiserFactory is
     IFranchiserFactoryEvents,
     IFranchiserImmutableState
 {
+    /// @notice The initial value for the maximum number of `subDelegatee` addresses that a Franchiser
+    ///         contract can have at any one time.
+    /// @dev Decreases by half every level of nesting.
+    /// @return initialMaximumSubDelegatees The intial maximum number of `subDelegatee` addresses.
+    function initialMaximumSubDelegatees()
+        external
+        returns (uint256 initialMaximumSubDelegatees);
+
     /// @notice The implementation contract used to clone Franchiser contracts.
     /// @dev Used as part of an EIP-1167 proxy minimal proxy setup.
     /// @return franchiserImplementation The Franchiser implementation contract.
@@ -18,14 +25,6 @@ interface IFranchiserFactory is
         external
         view
         returns (Franchiser franchiserImplementation);
-
-    /// @notice The implementation contract used to clone SubFranchiser contracts.
-    /// @dev Used as part of an EIP-1167 proxy minimal proxy setup.
-    /// @return subFranchiserImplementation The SubFranchiser implementation contract.
-    function subFranchiserImplementation()
-        external
-        view
-        returns (SubFranchiser subFranchiserImplementation);
 
     /// @notice Looks up the Franchiser associated with the `owner` and `delegatee`.
     /// @dev Returns the address of the Franchiser even it it does not yet exist,

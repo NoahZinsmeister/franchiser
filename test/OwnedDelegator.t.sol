@@ -25,16 +25,17 @@ contract OwnedDelegatorTest is
     address private constant carol = 0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC;
 
     VotingTokenConcrete private votingToken;
+    OwnedDelegatorConcrete private ownedDelegatorImplementation;
     OwnedDelegatorConcrete private ownedDelegator;
 
     function setUp() public {
         votingToken = new VotingTokenConcrete();
-        vm.prank(alice);
+        ownedDelegatorImplementation = new OwnedDelegatorConcrete(
+            IVotingToken(address(votingToken))
+        );
         // we need to set this up as a clone to work
         ownedDelegator = OwnedDelegatorConcrete(
-            address(
-                new OwnedDelegatorConcrete(IVotingToken(address(votingToken)))
-            ).clone()
+            address(ownedDelegatorImplementation).clone()
         );
     }
 
@@ -44,11 +45,8 @@ contract OwnedDelegatorTest is
     }
 
     function testImplementationBroken() public {
-        OwnedDelegatorConcrete ownedDelegatorConcrete = new OwnedDelegatorConcrete(
-                IVotingToken(address(0))
-            );
-        assertEq(ownedDelegatorConcrete.owner(), address(0));
-        assertEq(ownedDelegatorConcrete.delegatee(), address(1));
+        assertEq(ownedDelegatorImplementation.owner(), address(0));
+        assertEq(ownedDelegatorImplementation.delegatee(), address(1));
     }
 
     function testInitializeRevertsNoDelegatee() public {

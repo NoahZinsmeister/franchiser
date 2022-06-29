@@ -4,46 +4,57 @@ pragma solidity ^0.8;
 import {IFranchiserErrors} from "./IFranchiserErrors.sol";
 import {IFranchiserEvents} from "./IFranchiserEvents.sol";
 import {IOwnedDelegator} from "../OwnedDelegator/IOwnedDelegator.sol";
-import {SubFranchiser} from "../../SubFranchiser.sol";
+import {Franchiser} from "../../Franchiser.sol";
 
 /// @title Interface for the Franchiser contract.
 interface IFranchiser is IFranchiserErrors, IFranchiserEvents, IOwnedDelegator {
-    /// @notice The maximum number of `subDelegatee` addresses that the contract can have at any one time.
-    /// @return maximumActiveSubDelegatees The maximum number of `subDelegatee` addresses.
-    function maximumActiveSubDelegatees()
-        external
-        returns (uint256 maximumActiveSubDelegatees);
-
-    /// @notice The implementation contract used to clone SubFranchiser contracts.
+    /// @notice The implementation contract used to clone Franchiser contracts.
     /// @dev Used as part of an EIP-1167 proxy minimal proxy setup.
-    /// @return subFranchiserImplementation The SubFranchiser implementation contract.
-    function subFranchiserImplementation()
+    /// @return franchiserImplementation The Franchiser implementation contract.
+    function franchiserImplementation()
         external
         view
-        returns (SubFranchiser subFranchiserImplementation);
+        returns (Franchiser franchiserImplementation);
 
-    /// @notice The list of active `subDelegatee` addresses.
-    /// @return activeSubDelegatees The current `subDelegatee` addresses.
-    function activeSubDelegatees()
+    /// @notice The maximum number of `subDelegatee` addresses that the contract can have at any one time.
+    /// @return maximumSubDelegatees The maximum number of `subDelegatee` addresses.
+    function maximumSubDelegatees()
         external
-        returns (address[] memory activeSubDelegatees);
+        returns (uint256 maximumSubDelegatees);
 
-    /// @notice Looks up the SubFranchiser associated with the `subDelegatee`.
-    /// @dev Returns the address of the SubFranchiser even it it does not yet exist,
+    /// @notice The list of current `subDelegatee` addresses.
+    /// @return subDelegatees The current `subDelegatee` addresses.
+    function subDelegatees() external returns (address[] memory subDelegatees);
+
+    /// @notice Can be called once to set the contract's `delegatee` and `maximumActiveSubDelegatees`.
+    /// @param owner The `owner`.
+    /// @param delegatee The `delegatee`.
+    /// @param maximumActiveSubDelegatees The maximum number of `subDelegatee` addresses.
+    function initialize(
+        address owner,
+        address delegatee,
+        uint256 maximumActiveSubDelegatees
+    ) external;
+
+    /// @notice Looks up the Franchiser associated with the `subDelegatee`.
+    /// @dev Returns the address of the Franchiser even it it does not yet exist,
     ///      thanks to CREATE2.
     /// @param subDelegatee The target `subDelegatee`.
-    /// @return subFranchiser The SubFranchiser contract, whether or not it exists yet.
-    function getSubFranchiser(address subDelegatee)
+    /// @return franchiser The Franchiser contract, whether or not it exists yet.
+    function getFranchiser(address subDelegatee)
         external
         view
-        returns (SubFranchiser subFranchiser);
+        returns (Franchiser franchiser);
 
     /// @notice Delegates `amount` of `votingToken` to `subDelegatee`.
     /// @dev Can only be called by the `delegatee`. The SubFranchiser associated
     ///      with the `subDelegatee` must not already be active.
-    /// @param amount The address that will receive voting power.
     /// @param subDelegatee The address that will receive voting power.
-    function subDelegate(uint256 amount, address subDelegatee) external;
+    /// @param amount The address that will receive voting power.
+    /// @return franchiser The Franchiser contract.
+    function subDelegate(address subDelegatee, uint256 amount)
+        external
+        returns (Franchiser franchiser);
 
     /// @notice Undelegates to `subDelegatee`.
     /// @dev Can only be called by the `delegatee`. The SubFranchiser associated

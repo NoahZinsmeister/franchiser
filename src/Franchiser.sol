@@ -7,7 +7,6 @@ import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/Enum
 import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 import {Clones} from "openzeppelin-contracts/contracts/proxy/Clones.sol";
 import {SafeTransferLib, ERC20} from "solmate/utils/SafeTransferLib.sol";
-import {SubFranchiser} from "./SubFranchiser.sol";
 import {IVotingToken} from "./interfaces/IVotingToken.sol";
 
 contract Franchiser is IFranchiser, OwnedDelegator {
@@ -17,23 +16,31 @@ contract Franchiser is IFranchiser, OwnedDelegator {
     using SafeTransferLib for ERC20;
 
     /// @inheritdoc IFranchiser
-    uint256 public constant maximumActiveSubDelegatees = 10;
+    Franchiser public immutable franchiserImplementation;
 
     /// @inheritdoc IFranchiser
-    SubFranchiser public immutable subFranchiserImplementation;
+    uint256 public maximumSubDelegatees;
 
-    EnumerableSet.AddressSet private _activeSubDelegatees;
+    EnumerableSet.AddressSet private _subDelegatees;
 
-    constructor(
-        IVotingToken votingToken,
-        SubFranchiser subFranchiserImplementation_
-    ) OwnedDelegator(votingToken) {
-        subFranchiserImplementation = subFranchiserImplementation_;
+    /// @inheritdoc IFranchiser
+    function subDelegatees() public view returns (address[] memory) {
+        return _subDelegatees.values();
+    }
+
+    constructor(IVotingToken votingToken) OwnedDelegator(votingToken) {
+        franchiserImplementation = Franchiser(address(this));
     }
 
     /// @inheritdoc IFranchiser
-    function activeSubDelegatees() external view returns (address[] memory) {
-        return _activeSubDelegatees.values();
+    function initialize(
+        address owner,
+        address delegatee,
+        uint256 maximumSubDelegatees_
+    ) external {
+        OwnedDelegator.initialize(owner, delegatee);
+        maximumSubDelegatees = maximumSubDelegatees_;
+        emit MaximumSubDelegateesSet(maximumSubDelegatees_);
     }
 
     function getSalt(address subDelegatee) private pure returns (bytes32) {
@@ -41,72 +48,72 @@ contract Franchiser is IFranchiser, OwnedDelegator {
     }
 
     /// @inheritdoc IFranchiser
-    function getSubFranchiser(address subDelegatee)
+    function getFranchiser(address subDelegatee)
         public
         view
-        returns (SubFranchiser)
+        returns (Franchiser)
     {
         return
-            SubFranchiser(
-                address(subFranchiserImplementation)
-                    .predictDeterministicAddress(
-                        getSalt(subDelegatee),
-                        address(this)
-                    )
+            Franchiser(
+                address(franchiserImplementation).predictDeterministicAddress(
+                    getSalt(subDelegatee),
+                    address(this)
+                )
             );
     }
 
     /// @inheritdoc IFranchiser
-    function subDelegate(uint256 amount, address subDelegatee)
+    function subDelegate(address subDelegatee, uint256 amount)
         external
         onlyDelegatee
+        returns (Franchiser franchiser)
     {
-        if (_activeSubDelegatees.length() == maximumActiveSubDelegatees)
-            revert CannotExceedActiveSubDelegateesMaximum(
-                maximumActiveSubDelegatees
-            );
-        if (_activeSubDelegatees.contains(subDelegatee))
+        if (_subDelegatees.length() == maximumSubDelegatees)
+            revert CannotExceedMaximumSubDelegatees(maximumSubDelegatees);
+        if (_subDelegatees.contains(subDelegatee))
             revert SubDelegateeAlreadyActive(subDelegatee);
 
-        SubFranchiser subFranchiser = getSubFranchiser(subDelegatee);
+        franchiser = getFranchiser(subDelegatee);
         // deploy a new contract if necessary
-        if (!address(subFranchiser).isContract()) {
-            subFranchiser = SubFranchiser(
-                address(subFranchiserImplementation).cloneDeterministic(
+        if (!address(franchiser).isContract()) {
+            franchiser = Franchiser(
+                address(franchiserImplementation).cloneDeterministic(
                     getSalt(subDelegatee)
                 )
             );
-            subFranchiser.initialize(address(this), subDelegatee);
+            franchiser.initialize(
+                address(this),
+                subDelegatee,
+                maximumSubDelegatees / 2
+            );
         }
 
-        ERC20(address(votingToken)).safeTransfer(
-            address(subFranchiser),
-            amount
-        );
-        _activeSubDelegatees.add(subDelegatee);
-        emit SubDelegateeActivated(subDelegatee, subFranchiser);
+        ERC20(address(votingToken)).safeTransfer(address(franchiser), amount);
+        _subDelegatees.add(subDelegatee);
+        emit SubDelegateeActivated(subDelegatee, franchiser);
     }
 
     /// @inheritdoc IFranchiser
     function unSubDelegate(address subDelegatee) external onlyDelegatee {
-        if (!_activeSubDelegatees.contains(subDelegatee))
+        if (!_subDelegatees.contains(subDelegatee))
             revert SubDelegateeNotActive(subDelegatee);
         _unSubDelegate(subDelegatee);
     }
 
     function _unSubDelegate(address subDelegatee) private {
-        SubFranchiser subFranchiser = getSubFranchiser(subDelegatee);
-        subFranchiser.recall(address(this));
-        _activeSubDelegatees.remove(subDelegatee);
-        emit SubDelegateeDeactivated(subDelegatee, subFranchiser);
+        Franchiser franchiser = getFranchiser(subDelegatee);
+        franchiser.recall(address(this));
+        _subDelegatees.remove(subDelegatee);
+        emit SubDelegateeDeactivated(subDelegatee, franchiser);
     }
 
     /// @inheritdoc IFranchiser
     function recall(address to) public override(IFranchiser, OwnedDelegator) {
+        // very important that we copy into memory to avoid bugs due to ordering
+        address[] memory subDelegatees_ = subDelegatees();
         unchecked {
-            for (uint256 i; i < _activeSubDelegatees.length(); i++) {
-                address subDelegatee = _activeSubDelegatees.at(i);
-                _unSubDelegate(subDelegatee);
+            for (uint256 i; i < subDelegatees_.length; i++) {
+                _unSubDelegate(subDelegatees_[i]);
             }
         }
         OwnedDelegator.recall(to);
