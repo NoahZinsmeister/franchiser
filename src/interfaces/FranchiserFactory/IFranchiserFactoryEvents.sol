@@ -7,11 +7,11 @@ import {Franchiser} from "../../Franchiser.sol";
 interface IFranchiserFactoryEvents {
     /// @notice Emitted when a new Franchiser is created.
     /// @param owner The `owner`.
-    /// @param beneficiary The `beneficiary`.
+    /// @param delegatee The `delegatee`.
     /// @param franchiser The new Franchiser contract.
     event NewFranchiser(
         address indexed owner,
-        address indexed beneficiary,
+        address indexed delegatee,
         Franchiser franchiser
     );
 }

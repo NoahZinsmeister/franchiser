@@ -2,16 +2,15 @@
 pragma solidity 0.8.15;
 
 import {IFranchiser} from "./interfaces/Franchiser/IFranchiser.sol";
-import {OwnedBeneficiary} from "./base/OwnedBeneficiary.sol";
+import {OwnedDelegator} from "./base/OwnedDelegator.sol";
 import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 import {Clones} from "openzeppelin-contracts/contracts/proxy/Clones.sol";
 import {SafeTransferLib, ERC20} from "solmate/utils/SafeTransferLib.sol";
 import {SubFranchiser} from "./SubFranchiser.sol";
 import {IVotingToken} from "./interfaces/IVotingToken.sol";
-import {IOwnedBeneficiary} from "./interfaces/OwnedBeneficiary/IOwnedBeneficiary.sol";
 
-contract Franchiser is IFranchiser, OwnedBeneficiary {
+contract Franchiser is IFranchiser, OwnedDelegator {
     using EnumerableSet for EnumerableSet.AddressSet;
     using Address for address;
     using Clones for address;
@@ -28,7 +27,7 @@ contract Franchiser is IFranchiser, OwnedBeneficiary {
     constructor(
         IVotingToken votingToken,
         SubFranchiser subFranchiserImplementation_
-    ) OwnedBeneficiary(votingToken) {
+    ) OwnedDelegator(votingToken) {
         subFranchiserImplementation = subFranchiserImplementation_;
     }
 
@@ -60,7 +59,7 @@ contract Franchiser is IFranchiser, OwnedBeneficiary {
     /// @inheritdoc IFranchiser
     function subDelegate(uint256 amount, address subDelegatee)
         external
-        onlyBeneficiary
+        onlyDelegatee
     {
         if (_activeSubDelegatees.length() == maximumActiveSubDelegatees)
             revert CannotExceedActiveSubDelegateesMaximum(
@@ -89,7 +88,7 @@ contract Franchiser is IFranchiser, OwnedBeneficiary {
     }
 
     /// @inheritdoc IFranchiser
-    function unSubDelegate(address subDelegatee) external onlyBeneficiary {
+    function unSubDelegate(address subDelegatee) external onlyDelegatee {
         if (!_activeSubDelegatees.contains(subDelegatee))
             revert SubDelegateeNotActive(subDelegatee);
         _unSubDelegate(subDelegatee);
@@ -103,13 +102,13 @@ contract Franchiser is IFranchiser, OwnedBeneficiary {
     }
 
     /// @inheritdoc IFranchiser
-    function recall(address to) public override(IFranchiser, OwnedBeneficiary) {
+    function recall(address to) public override(IFranchiser, OwnedDelegator) {
         unchecked {
             for (uint256 i; i < _activeSubDelegatees.length(); i++) {
                 address subDelegatee = _activeSubDelegatees.at(i);
                 _unSubDelegate(subDelegatee);
             }
         }
-        OwnedBeneficiary.recall(to);
+        OwnedDelegator.recall(to);
     }
 }

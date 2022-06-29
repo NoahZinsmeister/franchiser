@@ -23,23 +23,22 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
     constructor(IVotingToken votingToken)
         FranchiserImmutableState(votingToken)
     {
-        subFranchiserImplementation = new SubFranchiser(votingToken);
         franchiserImplementation = new Franchiser(
             votingToken,
-            subFranchiserImplementation
+            subFranchiserImplementation = new SubFranchiser(votingToken)
         );
     }
 
-    function getSalt(address owner, address beneficiary)
+    function getSalt(address owner, address delegatee)
         private
         pure
         returns (bytes32)
     {
-        return keccak256(abi.encodePacked(owner, beneficiary));
+        return keccak256(abi.encodePacked(owner, delegatee));
     }
 
     /// @inheritdoc IFranchiserFactory
-    function getFranchiser(address owner, address beneficiary)
+    function getFranchiser(address owner, address delegatee)
         public
         view
         returns (Franchiser)
@@ -47,27 +46,27 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
         return
             Franchiser(
                 address(franchiserImplementation).predictDeterministicAddress(
-                    getSalt(owner, beneficiary),
+                    getSalt(owner, delegatee),
                     address(this)
                 )
             );
     }
 
     /// @inheritdoc IFranchiserFactory
-    function fund(address beneficiary, uint256 amount)
+    function fund(address delegatee, uint256 amount)
         public
         returns (Franchiser franchiser)
     {
-        franchiser = getFranchiser(msg.sender, beneficiary);
+        franchiser = getFranchiser(msg.sender, delegatee);
         // deploy a new contract if necessary
         if (!address(franchiser).isContract()) {
             franchiser = Franchiser(
                 address(franchiserImplementation).cloneDeterministic(
-                    getSalt(msg.sender, beneficiary)
+                    getSalt(msg.sender, delegatee)
                 )
             );
-            franchiser.initialize(address(this), beneficiary);
-            emit NewFranchiser(msg.sender, beneficiary, franchiser);
+            franchiser.initialize(address(this), delegatee);
+            emit NewFranchiser(msg.sender, delegatee, franchiser);
         }
 
         ERC20(address(votingToken)).safeTransferFrom(
@@ -78,14 +77,14 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
     }
 
     /// @inheritdoc IFranchiserFactory
-    function recall(address beneficiary, address to) external {
-        Franchiser franchiser = getFranchiser(msg.sender, beneficiary);
+    function recall(address delegatee, address to) external {
+        Franchiser franchiser = getFranchiser(msg.sender, delegatee);
         if (address(franchiser).isContract()) franchiser.recall(to);
     }
 
     /// @inheritdoc IFranchiserFactory
     function permitAndFund(
-        address beneficiary,
+        address delegatee,
         uint256 amount,
         uint256 deadline,
         uint8 v,
@@ -104,6 +103,6 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
                 r,
                 s
             );
-        return fund(beneficiary, amount);
+        return fund(delegatee, amount);
     }
 }

@@ -8,7 +8,7 @@ import {FranchiserFactory} from "../src/FranchiserFactory.sol";
 import {IVotingToken} from "../src/interfaces/IVotingToken.sol";
 import {Franchiser} from "../src/Franchiser.sol";
 
-contract OwnedBeneficiaryTest is Test, IFranchiserFactoryEvents {
+contract FranchiserFactoryTest is Test, IFranchiserFactoryEvents {
     address private constant alice = 0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa;
     address private constant bob = 0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB;
 
@@ -28,7 +28,7 @@ contract OwnedBeneficiaryTest is Test, IFranchiserFactoryEvents {
             address(0)
         );
         assertEq(
-            franchiserFactory.franchiserImplementation().beneficiary(),
+            franchiserFactory.franchiserImplementation().delegatee(),
             address(1)
         );
     }
@@ -47,7 +47,7 @@ contract OwnedBeneficiaryTest is Test, IFranchiserFactoryEvents {
 
         assertEq(address(expectedFranchiser), address(franchiser));
         assertEq(franchiser.owner(), address(franchiserFactory));
-        assertEq(franchiser.beneficiary(), bob);
+        assertEq(franchiser.delegatee(), bob);
         assertEq(votingToken.delegates(address(franchiser)), bob);
     }
 
