@@ -63,7 +63,7 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
                 )
             );
             franchiser.initialize(
-                address(this),
+                msg.sender,
                 delegatee,
                 initialMaximumSubDelegatees
             );

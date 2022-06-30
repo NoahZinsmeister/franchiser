@@ -59,9 +59,12 @@ contract FranchiserTest is Test, IFranchiserErrors, IFranchiserEvents {
 
     function testInitialize() public {
         vm.expectEmit(true, true, false, true, address(franchiser));
-        emit Initialized(alice, bob, 1);
+        emit Initialized(address(1), alice, bob, 1);
+        vm.prank(address(1));
         franchiser.initialize(alice, bob, 1);
-        assertEq(franchiser.owner(), alice);
+
+        assertEq(franchiser.owner(), address(1));
+        assertEq(franchiser.delegator(), alice);
         assertEq(franchiser.delegatee(), bob);
         assertEq(franchiser.maximumSubDelegatees(), 1);
         assertEq(franchiser.subDelegatees(), new address[](0));
@@ -97,7 +100,7 @@ contract FranchiserTest is Test, IFranchiserErrors, IFranchiserEvents {
         Franchiser expectedFranchiser = franchiser.getFranchiser(carol);
 
         vm.expectEmit(true, true, false, true, address(expectedFranchiser));
-        emit Initialized(address(franchiser), carol, 0);
+        emit Initialized(address(franchiser), bob, carol, 0);
         vm.expectEmit(true, false, false, true, address(franchiser));
         emit SubDelegateeActivated(carol, expectedFranchiser);
 

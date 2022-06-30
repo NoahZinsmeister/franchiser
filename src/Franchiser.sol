@@ -19,12 +19,23 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
     /// @inheritdoc IFranchiser
     Franchiser public immutable franchiserImplementation;
 
+    address private _delegator;
     /// @inheritdoc IFranchiser
     address public delegatee;
     /// @inheritdoc IFranchiser
     uint96 public maximumSubDelegatees;
 
     EnumerableSet.AddressSet private _subDelegatees;
+
+    /// @inheritdoc IFranchiser
+    function delegator() public view returns (address) {
+        // if a delegator has explicitly been set, return it
+        if (_delegator != address(0)) return _delegator;
+        // otherwise, look it up from the owner
+        else if (owner != address(0)) return Franchiser(owner).delegatee();
+        // return 0 in the implementation contract
+        return address(0);
+    }
 
     /// @inheritdoc IFranchiser
     function subDelegatees() public view returns (address[] memory) {
@@ -48,21 +59,36 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
     }
 
     /// @inheritdoc IFranchiser
+    function initialize(address delegatee_, uint96 maximumSubDelegatees_)
+        external
+    {
+        initialize(address(0), delegatee_, maximumSubDelegatees_);
+    }
+
+    /// @inheritdoc IFranchiser
     function initialize(
-        address owner_,
+        address delegator_,
         address delegatee_,
         uint96 maximumSubDelegatees_
-    ) external {
+    ) public {
         // the following two conditions, along with the fact
         // that delegatee is only set below (outside of the constructor),
         // ensures that initialize can only be called once in clones
         if (delegatee_ == address(0)) revert NoDelegatee();
         if (delegatee != address(0)) revert AlreadyInitialized();
-        owner = owner_;
+        owner = msg.sender;
+        // only store the delegator if necessary
+        if (delegator_ != address(0)) _delegator = delegator_;
         delegatee = delegatee_;
         maximumSubDelegatees = maximumSubDelegatees_;
         votingToken.delegate(delegatee_);
-        emit Initialized(owner_, delegatee_, maximumSubDelegatees_);
+        emit Initialized(
+            msg.sender,
+            // ensure that we return the delegator consistently
+            delegator(),
+            delegatee_,
+            maximumSubDelegatees_
+        );
     }
 
     function getSalt(address subDelegatee) private pure returns (bytes32) {
@@ -103,11 +129,7 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
                     getSalt(subDelegatee)
                 )
             );
-            franchiser.initialize(
-                address(this),
-                subDelegatee,
-                maximumSubDelegatees / 2
-            );
+            franchiser.initialize(subDelegatee, maximumSubDelegatees / 2);
         }
 
         ERC20(address(votingToken)).safeTransfer(address(franchiser), amount);

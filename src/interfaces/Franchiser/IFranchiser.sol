@@ -15,6 +15,12 @@ interface IFranchiser is IFranchiserErrors, IFranchiserEvents {
         view
         returns (Franchiser franchiserImplementation);
 
+    /// @notice The address that delegated tokens to this address.
+    /// @dev Can always be derived from the `delegatee` of the `owner`, except for
+    ///      direct descendants of the FranchiserFactory.
+    /// @return delegator The `delegator`.
+    function delegator() external view returns (address delegator);
+
     /// @notice The `delegatee` of the contract.
     /// @dev Never changes after being set via initialize,
     ///      but is not immutable because this contract is used via EIP-1167 clones.
@@ -31,13 +37,21 @@ interface IFranchiser is IFranchiserErrors, IFranchiserEvents {
     /// @return subDelegatees The current `subDelegatee` addresses.
     function subDelegatees() external returns (address[] memory subDelegatees);
 
-    /// @notice Can be called once to set the contract's `owner`,
-    ///         `delegatee` and `maximumSubDelegatees`.
-    /// @param owner The `owner`.
+    /// @notice Calls initialize with `delegator` set to address(0).
+    /// @dev Used for all Franchiser initialization beyond the first level of nesting.
+    /// @param delegatee The `delegatee`.
+    /// @param maximumSubDelegatees The maximum number of `subDelegatee` addresses.
+    function initialize(address delegatee, uint96 maximumSubDelegatees)
+        external;
+
+    /// @notice Can be called once to set the contract's `delegator`, `owner`,
+    ///         `delegatee`, and `maximumSubDelegatees`.
+    /// @dev The `owner` is always the sender of the call.
+    /// @param delegator The `delegator`.
     /// @param delegatee The `delegatee`.
     /// @param maximumSubDelegatees The maximum number of `subDelegatee` addresses.
     function initialize(
-        address owner,
+        address delegator,
         address delegatee,
         uint96 maximumSubDelegatees
     ) external;
