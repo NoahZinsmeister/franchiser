@@ -200,29 +200,32 @@ contract FranchiserTest is Test, IFranchiserErrors, IFranchiserEvents {
         assertEq(votingToken.balanceOf(address(franchiser)), 100);
     }
 
-    // fails because of onlyOwner
-    function testFailRecall() public {
+    function testRecallRevertsUNAUTHORIZED() public {
+        vm.expectRevert(bytes("UNAUTHORIZED"));
         vm.prank(address(1));
         franchiser.recall(address(0));
     }
 
     function testRecallZeroNoSubDelegatees() public {
+        vm.startPrank(alice);
         franchiser.initialize(alice, bob, 0);
-        vm.prank(alice);
         franchiser.recall(alice);
+        vm.stopPrank();
     }
 
     function testRecallNonZeroNoSubDelegatees() public {
-        franchiser.initialize(alice, bob, 0);
         votingToken.mint(address(franchiser), 100);
-        vm.prank(alice);
+        vm.startPrank(alice);
+        franchiser.initialize(alice, bob, 0);
         franchiser.recall(alice);
+        vm.stopPrank();
         assertEq(votingToken.balanceOf(address(alice)), 100);
     }
 
     function testRecallNonZeroOneSubDelegatee() public {
-        franchiser.initialize(alice, bob, 1);
         votingToken.mint(address(franchiser), 100);
+        vm.prank(alice);
+        franchiser.initialize(alice, bob, 1);
         vm.prank(bob);
         franchiser.subDelegate(carol, 50);
         vm.prank(alice);
@@ -231,8 +234,9 @@ contract FranchiserTest is Test, IFranchiserErrors, IFranchiserEvents {
     }
 
     function testRecallNonZeroTwoSubDelegatees() public {
-        franchiser.initialize(alice, bob, 2);
         votingToken.mint(address(franchiser), 100);
+        vm.prank(alice);
+        franchiser.initialize(alice, bob, 2);
         vm.startPrank(bob);
         franchiser.subDelegate(carol, 25);
         franchiser.subDelegate(dave, 25);
@@ -243,8 +247,10 @@ contract FranchiserTest is Test, IFranchiserErrors, IFranchiserEvents {
     }
 
     function testRecallNonZeroNestedSubDelegatees() public {
-        franchiser.initialize(alice, bob, 2);
         votingToken.mint(address(franchiser), 100);
+
+        vm.prank(alice);
+        franchiser.initialize(alice, bob, 2);
 
         vm.prank(bob);
         Franchiser carolFranchiser = franchiser.subDelegate(carol, 25);

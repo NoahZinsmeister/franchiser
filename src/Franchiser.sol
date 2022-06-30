@@ -157,7 +157,7 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
     }
 
     /// @inheritdoc IFranchiser
-    function recall(address to) public {
+    function recall(address to) public onlyOwner {
         uint256 numberOfSubDelegatees = _subDelegatees.length();
         unchecked {
             for (uint256 i; i < numberOfSubDelegatees; i++)

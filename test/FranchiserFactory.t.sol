@@ -74,8 +74,8 @@ contract FranchiserFactoryTest is
         assertEq(votingToken.delegates(address(franchiser)), bob);
     }
 
-    // fails because no allowance is given to franchiserFactory
-    function testFailFundNonZero() public {
+    function testFundNonZeroRevertsTRANSFER_FROM_FAILED() public {
+        vm.expectRevert(bytes("TRANSFER_FROM_FAILED"));
         franchiserFactory.fund(bob, 100);
     }
 
