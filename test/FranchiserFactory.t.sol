@@ -2,15 +2,21 @@
 pragma solidity 0.8.15;
 
 import {Test} from "forge-std/Test.sol";
+import {IFranchiserFactoryErrors} from "../src/interfaces/FranchiserFactory/IFranchiserFactoryErrors.sol";
 import {IFranchiserFactoryEvents} from "../src/interfaces/FranchiserFactory/IFranchiserFactoryEvents.sol";
 import {VotingTokenConcrete} from "./VotingTokenConcrete.sol";
 import {IVotingToken} from "../src/interfaces/IVotingToken.sol";
 import {FranchiserFactory} from "../src/FranchiserFactory.sol";
 import {Franchiser} from "../src/Franchiser.sol";
 
-contract FranchiserFactoryTest is Test, IFranchiserFactoryEvents {
+contract FranchiserFactoryTest is
+    Test,
+    IFranchiserFactoryErrors,
+    IFranchiserFactoryEvents
+{
     address private constant alice = 0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa;
     address private constant bob = 0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB;
+    address private constant carol = 0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC;
 
     VotingTokenConcrete private votingToken;
     FranchiserFactory private franchiserFactory;
@@ -85,6 +91,41 @@ contract FranchiserFactoryTest is Test, IFranchiserFactoryEvents {
         assertEq(votingToken.balanceOf(address(franchiser)), 0);
         assertEq(votingToken.balanceOf(alice), 100);
         assertEq(votingToken.getVotes(bob), 0);
+    }
+
+    function testFundManyRevertsArrayLengthMismatch() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(ArrayLengthMismatch.selector, 0, 1)
+        );
+        franchiserFactory.fundMany(new address[](0), new uint256[](1));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ArrayLengthMismatch.selector, 1, 0)
+        );
+        franchiserFactory.fundMany(new address[](1), new uint256[](0));
+    }
+
+    function testFundMany() public {
+        votingToken.mint(alice, 100);
+
+        address[] memory delegatees = new address[](2);
+        delegatees[0] = bob;
+        delegatees[1] = carol;
+
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 50;
+        amounts[1] = 50;
+
+        vm.startPrank(alice);
+        votingToken.approve(address(franchiserFactory), 100);
+        Franchiser[] memory franchisers = franchiserFactory.fundMany(
+            delegatees,
+            amounts
+        );
+        vm.stopPrank();
+
+        assertEq(votingToken.balanceOf(address(franchisers[0])), 50);
+        assertEq(votingToken.balanceOf(address(franchisers[1])), 50);
     }
 
     function testPermitAndFund() public {

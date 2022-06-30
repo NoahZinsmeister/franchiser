@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8;
 
+import {IFranchiserFactoryErrors} from "./IFranchiserFactoryErrors.sol";
 import {IFranchiserFactoryEvents} from "./IFranchiserFactoryEvents.sol";
 import {IFranchiserImmutableState} from "../IFranchiserImmutableState.sol";
 import {Franchiser} from "../../Franchiser.sol";
 
 /// @title Interface for the FranchiserFactory contract.
 interface IFranchiserFactory is
+    IFranchiserFactoryErrors,
     IFranchiserFactoryEvents,
     IFranchiserImmutableState
 {
@@ -54,16 +56,27 @@ interface IFranchiserFactory is
     /// @param to The `votingToken` recipient.
     function recall(address delegatee, address to) external;
 
-    /// @notice Funds the Franchiser contract associated with the `delegatee`
+    /// @notice Funds the Franchiser contracts associated with the `delegatees`
     ///         from the sender of the call.
-    /// @dev Requires the sender of the call to have approved this contract for `amount`.
+    /// @dev Requires the sender of the call to have approved this contract for sum of `amounts`.
+    ///      If Franchiser do not yet exist, they are created.
+    /// @param delegatees The target `delegatees`.
+    /// @param amounts The amounts of `votingToken` to allocate.
+    /// @return franchisers The Franchiser contracts.
+    function fundMany(address[] calldata delegatees, uint256[] calldata amounts)
+        external
+        returns (Franchiser[] memory franchisers);
+
+    /// @notice Funds the Franchiser contract associated with the `delegatee`
+    ///         using a signature.
+    /// @dev The signature must have been produced by the sener of the call.
     ///      If a Franchiser does not yet exist, one is created.
     /// @param delegatee The target `delegatee`.
     /// @param amount The amount of `votingToken` to allocate.
     /// @param deadline A timestamp which the current timestamp must be less than or equal to.
     /// @param v Must produce valid secp256k1 signature from the holder along with `r` and `s`.
     /// @param r Must produce valid secp256k1 signature from the holder along with `v` and `s`.
-    /// @param s Must produce valid secp256k1 signature from the holder along with `r` and `v`.
+    /// @param s Must produce valid secp256k1 signature from the holder along with `v` and `r`.
     /// @return franchiser The Franchiser contract.
     function permitAndFund(
         address delegatee,

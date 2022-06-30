@@ -15,7 +15,7 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
     using SafeTransferLib for ERC20;
 
     /// @inheritdoc IFranchiserFactory
-    uint256 public constant initialMaximumSubDelegatees = 8;
+    uint256 public constant initialMaximumSubDelegatees = 2**3; // 8
 
     /// @inheritdoc IFranchiserFactory
     Franchiser public immutable franchiserImplementation;
@@ -81,6 +81,20 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
     function recall(address delegatee, address to) external {
         Franchiser franchiser = getFranchiser(msg.sender, delegatee);
         if (address(franchiser).isContract()) franchiser.recall(to);
+    }
+
+    /// @inheritdoc IFranchiserFactory
+    function fundMany(address[] calldata delegatees, uint256[] calldata amounts)
+        public
+        returns (Franchiser[] memory franchisers)
+    {
+        if (delegatees.length != amounts.length)
+            revert ArrayLengthMismatch(delegatees.length, amounts.length);
+        franchisers = new Franchiser[](delegatees.length);
+        unchecked {
+            for (uint256 i; i < delegatees.length; i++)
+                franchisers[i] = fund(delegatees[i], amounts[i]);
+        }
     }
 
     /// @inheritdoc IFranchiserFactory
