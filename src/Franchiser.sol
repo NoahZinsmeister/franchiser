@@ -95,16 +95,21 @@ contract Franchiser is IFranchiser, OwnedDelegator {
 
     /// @inheritdoc IFranchiser
     function unSubDelegate(address subDelegatee) external onlyDelegatee {
-        if (!_subDelegatees.contains(subDelegatee))
-            revert SubDelegateeNotActive(subDelegatee);
-        _unSubDelegate(subDelegatee);
+        _unSubDelegate(subDelegatee, false);
     }
 
-    function _unSubDelegate(address subDelegatee) private {
+    /// @dev Must only set assumeExistence to true when the subDelegatee exists
+    ///      and is already a subDelegatee. This saves gas in recall.
+    function _unSubDelegate(address subDelegatee, bool assumeExistence)
+        private
+    {
         Franchiser franchiser = getFranchiser(subDelegatee);
-        franchiser.recall(address(this));
-        _subDelegatees.remove(subDelegatee);
-        emit SubDelegateeDeactivated(subDelegatee, franchiser);
+        if (assumeExistence || address(franchiser).isContract())
+            franchiser.recall(address(this));
+        if (assumeExistence || _subDelegatees.contains(subDelegatee)) {
+            _subDelegatees.remove(subDelegatee);
+            emit SubDelegateeDeactivated(subDelegatee, franchiser);
+        }
     }
 
     /// @inheritdoc IFranchiser
@@ -112,9 +117,8 @@ contract Franchiser is IFranchiser, OwnedDelegator {
         // very important that we copy into memory to avoid bugs due to ordering
         address[] memory subDelegatees_ = subDelegatees();
         unchecked {
-            for (uint256 i; i < subDelegatees_.length; i++) {
-                _unSubDelegate(subDelegatees_[i]);
-            }
+            for (uint256 i; i < subDelegatees_.length; i++)
+                _unSubDelegate(subDelegatees_[i], true);
         }
         OwnedDelegator.recall(to);
     }
