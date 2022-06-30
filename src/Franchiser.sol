@@ -136,11 +136,11 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
 
     /// @inheritdoc IFranchiser
     function recall(address to) public {
-        // very important that we copy into memory to avoid bugs due to ordering
-        address[] memory subDelegatees_ = subDelegatees();
+        uint256 numberOfSubDelegatees = _subDelegatees.length();
         unchecked {
-            for (uint256 i; i < subDelegatees_.length; i++)
-                _unSubDelegate(subDelegatees_[i], true);
+            for (uint256 i; i < numberOfSubDelegatees; i++)
+                // must use 0 not i, as ordering isn't consistent across removals
+                _unSubDelegate(_subDelegatees.at(0), true);
         }
 
         ERC20(address(votingToken)).safeTransfer(
