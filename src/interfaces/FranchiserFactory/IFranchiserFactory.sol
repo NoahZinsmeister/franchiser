@@ -50,16 +50,8 @@ interface IFranchiserFactory is
         external
         returns (Franchiser franchiser);
 
-    /// @notice Recalls funds in the Franchiser contract associated with the `delegatee`.
-    /// @dev Can only be called by the `owner`. No-op if a Franchiser does not exist.
-    /// @param delegatee The target `delegatee`.
-    /// @param to The `votingToken` recipient.
-    function recall(address delegatee, address to) external;
-
-    /// @notice Funds the Franchiser contracts associated with the `delegatees`
-    ///         from the sender of the call.
+    /// @notice Calls fund many times.
     /// @dev Requires the sender of the call to have approved this contract for sum of `amounts`.
-    ///      If Franchiser do not yet exist, they are created.
     /// @param delegatees The target `delegatees`.
     /// @param amounts The amounts of `votingToken` to allocate.
     /// @return franchisers The Franchiser contracts.
@@ -67,9 +59,21 @@ interface IFranchiserFactory is
         external
         returns (Franchiser[] memory franchisers);
 
+    /// @notice Recalls funds in the Franchiser contract associated with the `delegatee`.
+    /// @dev No-op if a Franchiser does not exist.
+    /// @param delegatee The target `delegatee`.
+    /// @param to The `votingToken` recipient.
+    function recall(address delegatee, address to) external;
+
+    /// @notice Calls recall many times.
+    /// @param delegatees The target `delegatees`.
+    /// @param tos The `votingToken` recipients.
+    function recallMany(address[] calldata delegatees, address[] calldata tos)
+        external;
+
     /// @notice Funds the Franchiser contract associated with the `delegatee`
     ///         using a signature.
-    /// @dev The signature must have been produced by the sener of the call.
+    /// @dev The signature must have been produced by the sender of the call.
     ///      If a Franchiser does not yet exist, one is created.
     /// @param delegatee The target `delegatee`.
     /// @param amount The amount of `votingToken` to allocate.
@@ -86,4 +90,22 @@ interface IFranchiserFactory is
         bytes32 r,
         bytes32 s
     ) external returns (Franchiser franchiser);
+
+    /// @notice Calls permitAndFund many times.
+    /// @dev The permit must be for the sum of `amounts`.
+    /// @param delegatees The target `delegatees`.
+    /// @param amounts The amounts of `votingToken` to allocate.
+    /// @param deadline A timestamp which the current timestamp must be less than or equal to.
+    /// @param v Must produce valid secp256k1 signature from the holder along with `r` and `s`.
+    /// @param r Must produce valid secp256k1 signature from the holder along with `v` and `s`.
+    /// @param s Must produce valid secp256k1 signature from the holder along with `v` and `r`.
+    /// @return franchisers The Franchiser contracts.
+    function permitAndFundMany(
+        address[] calldata delegatees,
+        uint256[] calldata amounts,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external returns (Franchiser[] memory franchisers);
 }

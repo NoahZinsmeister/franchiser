@@ -78,12 +78,6 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
     }
 
     /// @inheritdoc IFranchiserFactory
-    function recall(address delegatee, address to) external {
-        Franchiser franchiser = getFranchiser(msg.sender, delegatee);
-        if (address(franchiser).isContract()) franchiser.recall(to);
-    }
-
-    /// @inheritdoc IFranchiserFactory
     function fundMany(address[] calldata delegatees, uint256[] calldata amounts)
         public
         returns (Franchiser[] memory franchisers)
@@ -98,14 +92,30 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
     }
 
     /// @inheritdoc IFranchiserFactory
-    function permitAndFund(
-        address delegatee,
+    function recall(address delegatee, address to) public {
+        Franchiser franchiser = getFranchiser(msg.sender, delegatee);
+        if (address(franchiser).isContract()) franchiser.recall(to);
+    }
+
+    /// @inheritdoc IFranchiserFactory
+    function recallMany(address[] calldata delegatees, address[] calldata tos)
+        external
+    {
+        if (delegatees.length != tos.length)
+            revert ArrayLengthMismatch(delegatees.length, tos.length);
+        unchecked {
+            for (uint256 i; i < delegatees.length; i++)
+                recall(delegatees[i], tos[i]);
+        }
+    }
+
+    function permit(
         uint256 amount,
         uint256 deadline,
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external returns (Franchiser) {
+    ) private {
         // this check ensures that if the permit is front-run,
         // the call does not fail
         if (votingToken.allowance(msg.sender, address(this)) < amount)
@@ -118,6 +128,39 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
                 r,
                 s
             );
+    }
+
+    /// @inheritdoc IFranchiserFactory
+    function permitAndFund(
+        address delegatee,
+        uint256 amount,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external returns (Franchiser) {
+        permit(amount, deadline, v, r, s);
         return fund(delegatee, amount);
+    }
+
+    /// @inheritdoc IFranchiserFactory
+    function permitAndFundMany(
+        address[] calldata delegatees,
+        uint256[] calldata amounts,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external returns (Franchiser[] memory franchisers) {
+        if (delegatees.length != amounts.length)
+            revert ArrayLengthMismatch(delegatees.length, amounts.length);
+        uint256 amount;
+        for (uint256 i; i < delegatees.length; i++) amount += amounts[i];
+        permit(amount, deadline, v, r, s);
+        franchisers = new Franchiser[](delegatees.length);
+        unchecked {
+            for (uint256 i; i < delegatees.length; i++)
+                franchisers[i] = fund(delegatees[i], amounts[i]);
+        }
     }
 }
