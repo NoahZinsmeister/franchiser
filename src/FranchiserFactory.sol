@@ -15,7 +15,7 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
     using SafeTransferLib for ERC20;
 
     /// @inheritdoc IFranchiserFactory
-    uint256 public constant initialMaximumSubDelegatees = 2**3; // 8
+    uint96 public constant initialMaximumSubDelegatees = 2**3; // 8
 
     /// @inheritdoc IFranchiserFactory
     Franchiser public immutable franchiserImplementation;

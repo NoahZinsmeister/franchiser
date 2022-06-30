@@ -2,14 +2,15 @@
 pragma solidity 0.8.15;
 
 import {IFranchiser} from "./interfaces/Franchiser/IFranchiser.sol";
-import {OwnedDelegator} from "./base/OwnedDelegator.sol";
+import {FranchiserImmutableState} from "./base/FranchiserImmutableState.sol";
+import {Owned} from "solmate/auth/Owned.sol";
 import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 import {Clones} from "openzeppelin-contracts/contracts/proxy/Clones.sol";
 import {SafeTransferLib, ERC20} from "solmate/utils/SafeTransferLib.sol";
 import {IVotingToken} from "./interfaces/IVotingToken.sol";
 
-contract Franchiser is IFranchiser, OwnedDelegator {
+contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
     using EnumerableSet for EnumerableSet.AddressSet;
     using Address for address;
     using Clones for address;
@@ -19,7 +20,9 @@ contract Franchiser is IFranchiser, OwnedDelegator {
     Franchiser public immutable franchiserImplementation;
 
     /// @inheritdoc IFranchiser
-    uint256 public maximumSubDelegatees;
+    address public delegatee;
+    /// @inheritdoc IFranchiser
+    uint96 public maximumSubDelegatees;
 
     EnumerableSet.AddressSet private _subDelegatees;
 
@@ -28,19 +31,38 @@ contract Franchiser is IFranchiser, OwnedDelegator {
         return _subDelegatees.values();
     }
 
-    constructor(IVotingToken votingToken) OwnedDelegator(votingToken) {
+    /// @dev Reverts if called by any account other than the `delegatee`.
+    modifier onlyDelegatee() {
+        if (msg.sender != delegatee) revert NotDelegatee(msg.sender, delegatee);
+        _;
+    }
+
+    constructor(IVotingToken votingToken)
+        FranchiserImmutableState(votingToken)
+        Owned(address(0))
+    {
         franchiserImplementation = Franchiser(address(this));
+        // this borks the implementation contract as desired,
+        // new instances should be cloned.
+        delegatee = address(1);
     }
 
     /// @inheritdoc IFranchiser
     function initialize(
-        address owner,
-        address delegatee,
-        uint256 maximumSubDelegatees_
+        address owner_,
+        address delegatee_,
+        uint96 maximumSubDelegatees_
     ) external {
-        OwnedDelegator.initialize(owner, delegatee);
+        // the following two conditions, along with the fact
+        // that delegatee is only set below (outside of the constructor),
+        // ensures that initialize can only be called once in clones
+        if (delegatee_ == address(0)) revert NoDelegatee();
+        if (delegatee != address(0)) revert AlreadyInitialized();
+        owner = owner_;
+        delegatee = delegatee_;
         maximumSubDelegatees = maximumSubDelegatees_;
-        emit MaximumSubDelegateesSet(maximumSubDelegatees_);
+        votingToken.delegate(delegatee_);
+        emit Initialized(owner_, delegatee_, maximumSubDelegatees_);
     }
 
     function getSalt(address subDelegatee) private pure returns (bytes32) {
@@ -113,13 +135,17 @@ contract Franchiser is IFranchiser, OwnedDelegator {
     }
 
     /// @inheritdoc IFranchiser
-    function recall(address to) public override(IFranchiser, OwnedDelegator) {
+    function recall(address to) public {
         // very important that we copy into memory to avoid bugs due to ordering
         address[] memory subDelegatees_ = subDelegatees();
         unchecked {
             for (uint256 i; i < subDelegatees_.length; i++)
                 _unSubDelegate(subDelegatees_[i], true);
         }
-        OwnedDelegator.recall(to);
+
+        ERC20(address(votingToken)).safeTransfer(
+            to,
+            votingToken.balanceOf(address(this))
+        );
     }
 }

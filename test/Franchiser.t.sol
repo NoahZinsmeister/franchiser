@@ -4,20 +4,12 @@ pragma solidity 0.8.15;
 import {Test} from "forge-std/Test.sol";
 import {IFranchiserErrors} from "../src/interfaces/Franchiser/IFranchiserErrors.sol";
 import {IFranchiserEvents} from "../src/interfaces/Franchiser/IFranchiserEvents.sol";
-import {IOwnedDelegatorErrors} from "../src/interfaces/OwnedDelegator/IOwnedDelegatorErrors.sol";
-import {IOwnedDelegatorEvents} from "../src/interfaces/OwnedDelegator/IOwnedDelegatorEvents.sol";
 import {VotingTokenConcrete} from "./VotingTokenConcrete.sol";
 import {IVotingToken} from "../src/interfaces/IVotingToken.sol";
 import {Franchiser} from "../src/Franchiser.sol";
 import {Clones} from "openzeppelin-contracts/contracts/proxy/Clones.sol";
 
-contract FranchiserTest is
-    Test,
-    IFranchiserErrors,
-    IFranchiserEvents,
-    IOwnedDelegatorErrors,
-    IOwnedDelegatorEvents
-{
+contract FranchiserTest is Test, IFranchiserErrors, IFranchiserEvents {
     using Clones for address;
 
     address private constant alice = 0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa;
@@ -43,10 +35,10 @@ contract FranchiserTest is
             address(franchiser.franchiserImplementation()),
             address(franchiserImplementation)
         );
-        assertEq(franchiser.maximumSubDelegatees(), 0);
-        assertEq(franchiser.subDelegatees(), new address[](0));
         assertEq(franchiser.owner(), address(0));
         assertEq(franchiser.delegatee(), address(0));
+        assertEq(franchiser.maximumSubDelegatees(), 0);
+        assertEq(franchiser.subDelegatees(), new address[](0));
     }
 
     function testImplementationBroken() public {
@@ -54,24 +46,32 @@ contract FranchiserTest is
             address(franchiserImplementation.franchiserImplementation()),
             address(franchiserImplementation)
         );
-        assertEq(franchiserImplementation.maximumSubDelegatees(), 0);
-        assertEq(franchiserImplementation.subDelegatees(), new address[](0));
         assertEq(franchiserImplementation.owner(), address(0));
         assertEq(franchiserImplementation.delegatee(), address(1));
+        assertEq(franchiserImplementation.maximumSubDelegatees(), 0);
+        assertEq(franchiserImplementation.subDelegatees(), new address[](0));
+    }
+
+    function testInitializeRevertsNoDelegatee() public {
+        vm.expectRevert(NoDelegatee.selector);
+        franchiser.initialize(alice, address(0), 0);
     }
 
     function testInitialize() public {
         vm.expectEmit(true, true, false, true, address(franchiser));
-        emit Initialized(alice, bob);
-        vm.expectEmit(false, false, false, true, address(franchiser));
-        emit MaximumSubDelegateesSet(1);
+        emit Initialized(alice, bob, 1);
         franchiser.initialize(alice, bob, 1);
-
-        assertEq(franchiser.maximumSubDelegatees(), 1);
-        assertEq(franchiser.subDelegatees(), new address[](0));
         assertEq(franchiser.owner(), alice);
         assertEq(franchiser.delegatee(), bob);
+        assertEq(franchiser.maximumSubDelegatees(), 1);
+        assertEq(franchiser.subDelegatees(), new address[](0));
         assertEq(votingToken.delegates(address(franchiser)), bob);
+    }
+
+    function testInitializeRevertsAlreadyInitialized() public {
+        franchiser.initialize(alice, bob, 0);
+        vm.expectRevert(AlreadyInitialized.selector);
+        franchiser.initialize(alice, bob, 0);
     }
 
     function testSubDelegateRevertsNotDelegatee() public {
@@ -97,9 +97,7 @@ contract FranchiserTest is
         Franchiser expectedFranchiser = franchiser.getFranchiser(carol);
 
         vm.expectEmit(true, true, false, true, address(expectedFranchiser));
-        emit Initialized(address(franchiser), carol);
-        vm.expectEmit(false, false, false, true, address(expectedFranchiser));
-        emit MaximumSubDelegateesSet(0);
+        emit Initialized(address(franchiser), carol, 0);
         vm.expectEmit(true, false, false, true, address(franchiser));
         emit SubDelegateeActivated(carol, expectedFranchiser);
 

@@ -6,8 +6,14 @@ import {Franchiser} from "../../Franchiser.sol";
 /// @title Events for the Franchiser contract.
 interface IFranchiserEvents {
     /// @notice Emitted once per Franchiser.
+    /// @param owner The `owner`.
+    /// @param delegatee The `delegatee`.
     /// @param maximumSubDelegatees The `maximumSubDelegatees`.
-    event MaximumSubDelegateesSet(uint256 maximumSubDelegatees);
+    event Initialized(
+        address indexed owner,
+        address indexed delegatee,
+        uint96 maximumSubDelegatees
+    );
 
     /// @notice Emitted when a `subDelegatee` is activated.
     /// @param subDelegatee The `subDelegatee`.
