@@ -7,6 +7,12 @@ import {Franchiser} from "../../Franchiser.sol";
 
 /// @title Interface for the Franchiser contract.
 interface IFranchiser is IFranchiserErrors, IFranchiserEvents {
+    /// @notice The value resonsible for decaying `maximumSubDelegatees` at
+    ///         each subsequent level of nesting.
+    /// @dev At each nesting level, `maximumSubDelegatees` is divided by this factor.
+    /// @return decayFactor The `decayFactor`.
+    function decayFactor() external view returns (uint96 decayFactor);
+
     /// @notice The implementation contract used to clone Franchiser contracts.
     /// @dev Used as part of an EIP-1167 proxy minimal proxy setup.
     /// @return franchiserImplementation The Franchiser implementation contract.

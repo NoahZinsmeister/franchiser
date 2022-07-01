@@ -1,42 +1,28 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.8.15;
 
+import {IFranchiserLens} from "./interfaces/IFranchiserLens.sol";
 import {FranchiserImmutableState} from "./base/FranchiserImmutableState.sol";
 import {FranchiserFactory} from "./FranchiserFactory.sol";
 import {IVotingToken} from "./interfaces/IVotingToken.sol";
 import {Franchiser} from "./Franchiser.sol";
 
-contract FranchiserLens is FranchiserImmutableState {
-    error UnexpectedInitialMaximumSubDelegatees(
-        uint256 expectedInitialMaximumSubDelegatees,
-        uint256 initialMaximumSubDelegatees
-    );
+contract FranchiserLens is IFranchiserLens, FranchiserImmutableState {
+    /// @dev The asserts in the constructor ensure that this is safe to encode as a constant.
+    uint256 private constant maximumNestingDepth = 5; // log2(8) + 2
 
-    uint256 private constant expectedInitialMaximumSubDelegatees = 8;
-    uint256 private constant maximumNestingDepth = 5; // log2(expectedInitialMaximumSubDelegatees) + 2
-
+    /// @inheritdoc IFranchiserLens
     FranchiserFactory public immutable franchiserFactory;
 
     constructor(IVotingToken votingToken, FranchiserFactory franchiserFactory_)
         FranchiserImmutableState(votingToken)
     {
         franchiserFactory = franchiserFactory_;
-        if (
-            expectedInitialMaximumSubDelegatees !=
-            franchiserFactory.initialMaximumSubDelegatees()
-        )
-            revert UnexpectedInitialMaximumSubDelegatees(
-                expectedInitialMaximumSubDelegatees,
-                franchiserFactory.initialMaximumSubDelegatees()
-            );
+        assert(franchiserFactory.initialMaximumSubDelegatees() == 8);
+        assert(franchiserFactory.franchiserImplementation().decayFactor() == 2);
     }
 
-    struct Delegation {
-        address delegator;
-        address delegatee;
-        Franchiser franchiser;
-    }
-
+    /// @inheritdoc IFranchiserLens
     function getRootDelegation(Franchiser franchiser)
         public
         view
@@ -52,10 +38,11 @@ contract FranchiserLens is FranchiserImmutableState {
             });
     }
 
+    /// @inheritdoc IFranchiserLens
     function getVerticalDelegations(Franchiser franchiser)
         external
         view
-        returns (Delegation[] memory delegators)
+        returns (Delegation[] memory delegations)
     {
         uint256 delegatorsSeen;
         Delegation[] memory delegatorsTemporary = new Delegation[](
@@ -72,14 +59,15 @@ contract FranchiserLens is FranchiserImmutableState {
             }
             if (delegatorsSeen == maximumNestingDepth)
                 return delegatorsTemporary;
-            delegators = new Delegation[](delegatorsSeen);
+            delegations = new Delegation[](delegatorsSeen);
             for (uint256 i; i < delegatorsSeen; i++)
-                delegators[i] = delegatorsTemporary[i];
+                delegations[i] = delegatorsTemporary[i];
         }
     }
 
+    /// @inheritdoc IFranchiserLens
     function getHorizontalDelegations(Franchiser franchiser)
-        private
+        public
         view
         returns (Delegation[] memory delegations)
     {
@@ -99,13 +87,6 @@ contract FranchiserLens is FranchiserImmutableState {
         }
     }
 
-    struct DelegationWithVotes {
-        address delegator;
-        address delegatee;
-        Franchiser franchiser;
-        uint256 votes;
-    }
-
     function getVotes(Delegation memory delegation)
         private
         view
@@ -120,28 +101,30 @@ contract FranchiserLens is FranchiserImmutableState {
             });
     }
 
+    /// @inheritdoc IFranchiserLens
     function getAllDelegations(Franchiser franchiser)
         public
         view
-        returns (DelegationWithVotes[][] memory)
+        returns (DelegationWithVotes[][] memory delegationsWithVotes)
     {
-        DelegationWithVotes[][]
-            memory delegationsWithVotes = new DelegationWithVotes[][](
-                maximumNestingDepth
-            );
+        DelegationWithVotes[][5] memory delegationsWithVotesExpanded;
         Delegation memory rootDelegation = getRootDelegation(franchiser);
-        delegationsWithVotes[0] = new DelegationWithVotes[](1);
-        delegationsWithVotes[0][0] = getVotes(rootDelegation);
+        delegationsWithVotesExpanded[0] = new DelegationWithVotes[](1);
+        delegationsWithVotesExpanded[0][0] = getVotes(rootDelegation);
         unchecked {
             for (uint256 i = 1; i < maximumNestingDepth; i++) {
                 Delegation[][] memory descendantsNested;
                 descendantsNested = new Delegation[][](
-                    delegationsWithVotes[i - 1].length
+                    delegationsWithVotesExpanded[i - 1].length
                 );
                 uint256 totalDescendants;
-                for (uint256 j; j < delegationsWithVotes[i - 1].length; j++) {
+                for (
+                    uint256 j;
+                    j < delegationsWithVotesExpanded[i - 1].length;
+                    j++
+                ) {
                     descendantsNested[j] = getHorizontalDelegations(
-                        delegationsWithVotes[i - 1][j].franchiser
+                        delegationsWithVotesExpanded[i - 1][j].franchiser
                     );
                     totalDescendants += descendantsNested[j].length;
                 }
@@ -160,7 +143,7 @@ contract FranchiserLens is FranchiserImmutableState {
                     );
                 for (uint256 j; j < descendantsWithVotes.length; j++)
                     descendantsWithVotes[j] = getVotes(descendantsFlattened[j]);
-                delegationsWithVotes[i] = descendantsWithVotes;
+                delegationsWithVotesExpanded[i] = descendantsWithVotes;
             }
 
             uint256 delegationsWithVotesIndex;
@@ -169,16 +152,16 @@ contract FranchiserLens is FranchiserImmutableState {
                 delegationsWithVotesIndex < maximumNestingDepth;
                 delegationsWithVotesIndex++
             )
-                if (delegationsWithVotes[delegationsWithVotesIndex].length == 0)
-                    break;
+                if (
+                    delegationsWithVotesExpanded[delegationsWithVotesIndex]
+                        .length == 0
+                ) break;
 
-            DelegationWithVotes[][]
-                memory delegationsWithVotesTruncated = new DelegationWithVotes[][](
-                    delegationsWithVotesIndex
-                );
-            for (uint256 i; i < delegationsWithVotesTruncated.length; i++)
-                delegationsWithVotesTruncated[i] = delegationsWithVotes[i];
-            return delegationsWithVotesTruncated;
+            delegationsWithVotes = new DelegationWithVotes[][](
+                delegationsWithVotesIndex
+            );
+            for (uint256 i; i < delegationsWithVotes.length; i++)
+                delegationsWithVotes[i] = delegationsWithVotesExpanded[i];
         }
     }
 

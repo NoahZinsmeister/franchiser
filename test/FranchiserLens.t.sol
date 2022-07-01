@@ -7,6 +7,7 @@ import {FranchiserFactory} from "../src/FranchiserFactory.sol";
 import {FranchiserLens} from "../src/FranchiserLens.sol";
 import {IVotingToken} from "../src/interfaces/IVotingToken.sol";
 import {Franchiser} from "../src/Franchiser.sol";
+import {IFranchiserLens} from "../src/interfaces/IFranchiserLens.sol";
 
 contract FranchiserLensTest is Test {
     address private constant alice = 0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa;
@@ -41,7 +42,7 @@ contract FranchiserLensTest is Test {
     function testGetRootDelegationNoNesting() public {
         vm.prank(alice);
         Franchiser franchiser = franchiserFactory.fund(bob, 0);
-        FranchiserLens.Delegation memory delegation = franchiserLens
+        IFranchiserLens.Delegation memory delegation = franchiserLens
             .getRootDelegation(franchiser);
         assertEq(delegation.delegator, alice);
         assertEq(delegation.delegatee, bob);
@@ -53,7 +54,7 @@ contract FranchiserLensTest is Test {
         Franchiser bobFranchiser = franchiserFactory.fund(bob, 0);
         vm.prank(bob);
         Franchiser carolFranchiser = bobFranchiser.subDelegate(carol, 0);
-        FranchiserLens.Delegation memory delegation = franchiserLens
+        IFranchiserLens.Delegation memory delegation = franchiserLens
             .getRootDelegation(carolFranchiser);
 
         assertEq(delegation.delegator, alice);
@@ -80,7 +81,7 @@ contract FranchiserLensTest is Test {
 
     function testGetRootDelegationMaximumNesting() public {
         Franchiser[] memory franchisers = nestMaximumVertical();
-        FranchiserLens.Delegation memory delegation = franchiserLens
+        IFranchiserLens.Delegation memory delegation = franchiserLens
             .getRootDelegation(franchisers[franchisers.length - 1]);
 
         assertEq(delegation.delegator, alice);
@@ -91,9 +92,9 @@ contract FranchiserLensTest is Test {
     function testGetVerticalDelegationsNoNesting() public {
         vm.prank(alice);
         Franchiser franchiser = franchiserFactory.fund(bob, 0);
-        FranchiserLens.Delegation[]
-            memory delegations = new FranchiserLens.Delegation[](1);
-        delegations[0] = FranchiserLens.Delegation({
+        IFranchiserLens.Delegation[]
+            memory delegations = new IFranchiserLens.Delegation[](1);
+        delegations[0] = IFranchiserLens.Delegation({
             delegator: alice,
             delegatee: bob,
             franchiser: franchiser
@@ -111,14 +112,14 @@ contract FranchiserLensTest is Test {
         Franchiser bobFranchiser = franchiserFactory.fund(bob, 0);
         vm.prank(bob);
         Franchiser carolFranchiser = bobFranchiser.subDelegate(carol, 0);
-        FranchiserLens.Delegation[]
-            memory delegations = new FranchiserLens.Delegation[](2);
-        delegations[0] = FranchiserLens.Delegation({
+        IFranchiserLens.Delegation[]
+            memory delegations = new IFranchiserLens.Delegation[](2);
+        delegations[0] = IFranchiserLens.Delegation({
             delegator: bob,
             delegatee: carol,
             franchiser: carolFranchiser
         });
-        delegations[1] = FranchiserLens.Delegation({
+        delegations[1] = IFranchiserLens.Delegation({
             delegator: alice,
             delegatee: bob,
             franchiser: bobFranchiser
@@ -136,29 +137,29 @@ contract FranchiserLensTest is Test {
     function testGetVerticalDelegationsMaximumNesting() public {
         Franchiser[] memory franchisers = nestMaximumVertical();
 
-        FranchiserLens.Delegation[]
-            memory delegations = new FranchiserLens.Delegation[](5);
-        delegations[0] = FranchiserLens.Delegation({
+        IFranchiserLens.Delegation[]
+            memory delegations = new IFranchiserLens.Delegation[](5);
+        delegations[0] = IFranchiserLens.Delegation({
             delegator: erin,
             delegatee: frank,
             franchiser: franchisers[4]
         });
-        delegations[1] = FranchiserLens.Delegation({
+        delegations[1] = IFranchiserLens.Delegation({
             delegator: dave,
             delegatee: erin,
             franchiser: franchisers[3]
         });
-        delegations[2] = FranchiserLens.Delegation({
+        delegations[2] = IFranchiserLens.Delegation({
             delegator: carol,
             delegatee: dave,
             franchiser: franchisers[2]
         });
-        delegations[3] = FranchiserLens.Delegation({
+        delegations[3] = IFranchiserLens.Delegation({
             delegator: bob,
             delegatee: carol,
             franchiser: franchisers[1]
         });
-        delegations[4] = FranchiserLens.Delegation({
+        delegations[4] = IFranchiserLens.Delegation({
             delegator: alice,
             delegatee: bob,
             franchiser: franchisers[0]
@@ -233,7 +234,7 @@ contract FranchiserLensTest is Test {
 
         assertEq(uint160(nextDelegatee), 1 + 8 + 32 + 64 * 2);
 
-        FranchiserLens.DelegationWithVotes[][]
+        IFranchiserLens.DelegationWithVotes[][]
             memory delegationsWithVotes = franchiserLens.getAllDelegations(
                 franchisers[0][0]
             );

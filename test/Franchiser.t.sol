@@ -31,6 +31,7 @@ contract FranchiserTest is Test, IFranchiserErrors, IFranchiserEvents {
     }
 
     function testSetUp() public {
+        assertEq(franchiser.decayFactor(), 2);
         assertEq(
             address(franchiser.franchiserImplementation()),
             address(franchiserImplementation)

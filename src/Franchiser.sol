@@ -17,6 +17,9 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
     using SafeTransferLib for ERC20;
 
     /// @inheritdoc IFranchiser
+    uint96 public constant decayFactor = 2;
+
+    /// @inheritdoc IFranchiser
     Franchiser public immutable franchiserImplementation;
 
     address private _delegator;
@@ -129,7 +132,10 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
                     getSalt(subDelegatee)
                 )
             );
-            franchiser.initialize(subDelegatee, maximumSubDelegatees / 2);
+            franchiser.initialize(
+                subDelegatee,
+                maximumSubDelegatees / decayFactor
+            );
         }
 
         ERC20(address(votingToken)).safeTransfer(address(franchiser), amount);
