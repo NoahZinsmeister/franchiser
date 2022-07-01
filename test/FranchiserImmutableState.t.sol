@@ -12,17 +12,15 @@ contract FranchiserImmutableStateConcrete is FranchiserImmutableState {
 }
 
 contract FranchiserImmutableStateTest is Test {
-    address private constant alice = 0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa;
-
     FranchiserImmutableStateConcrete private franchiserImmutableState;
 
     function setUp() public {
         franchiserImmutableState = new FranchiserImmutableStateConcrete(
-            IVotingToken(alice)
+            IVotingToken(address(1))
         );
     }
 
     function testSetUp() public {
-        assertEq(address(franchiserImmutableState.votingToken()), alice);
+        assertEq(address(franchiserImmutableState.votingToken()), address(1));
     }
 }

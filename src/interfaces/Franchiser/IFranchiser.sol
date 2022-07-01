@@ -7,8 +7,7 @@ import {Franchiser} from "../../Franchiser.sol";
 
 /// @title Interface for the Franchiser contract.
 interface IFranchiser is IFranchiserErrors, IFranchiserEvents {
-    /// @notice The value resonsible for decaying `maximumSubDelegatees` at
-    ///         each subsequent level of nesting.
+    /// @notice The value resonsible for decaying `maximumSubDelegatees`.
     /// @dev At each nesting level, `maximumSubDelegatees` is divided by this factor.
     /// @return decayFactor The `decayFactor`.
     function decayFactor() external view returns (uint96 decayFactor);
@@ -22,18 +21,22 @@ interface IFranchiser is IFranchiserErrors, IFranchiserEvents {
         returns (Franchiser franchiserImplementation);
 
     /// @notice The address that delegated tokens to this address.
-    /// @dev Can always be derived from the `delegatee` of the `owner`, except for
+    /// @dev Is derived from the `delegatee` of the `owner`, except for
     ///      direct descendants of the FranchiserFactory.
+    ///      Never changes after being set via initialize.
     /// @return delegator The `delegator`.
     function delegator() external view returns (address delegator);
 
     /// @notice The `delegatee` of the contract.
-    /// @dev Never changes after being set via initialize,
-    ///      but is not immutable because this contract is used via EIP-1167 clones.
+    /// @dev Never changes after being set via initialize.
+    ///      Packed with `maximumSubDelegatees`.
     /// @return delegatee The `delegatee`.
     function delegatee() external returns (address delegatee);
 
-    /// @notice The maximum number of `subDelegatee` addresses that the contract can have at any one time.
+    /// @notice The maximum number of `subDelegatee` addresses that the contract
+    ///         can have at any one time.
+    /// @dev Never changes after being set via initialize.
+    ///      Packed with `delegatee`.
     /// @return maximumSubDelegatees The maximum number of `subDelegatee` addresses.
     function maximumSubDelegatees()
         external
@@ -76,7 +79,7 @@ interface IFranchiser is IFranchiserErrors, IFranchiserEvents {
     /// @dev Can only be called by the `delegatee`. The Franchiser associated
     ///      with the `subDelegatee` must not already be active.
     /// @param subDelegatee The address that will receive voting power.
-    /// @param amount The address that will receive voting power.
+    /// @param amount The amount of voting power.
     /// @return franchiser The Franchiser contract.
     function subDelegate(address subDelegatee, uint256 amount)
         external
@@ -84,12 +87,12 @@ interface IFranchiser is IFranchiserErrors, IFranchiserEvents {
 
     /// @notice Undelegates to `subDelegatee`.
     /// @dev Can only be called by the `delegatee`. No-op if the Franchiser associated
-    ///      with the `subDelegatee does not exist, or the address is not a `subDelegatee`.
+    ///      with the `subDelegatee` does not exist, or the address is not a `subDelegatee`.
     /// @param subDelegatee The address that voting power will be removed from.
     function unSubDelegate(address subDelegatee) external;
 
     /// @notice Transfers the contract's balance of `votingToken`, as well as the balance
-    ///         of all nested Franchiser contracts associated with each subDelegatee, to `to`.
+    ///         of all nested Franchiser contracts associated with each `subDelegatee`, to `to`.
     /// @dev Can only be called by the `owner`.
     /// @param to The address that will receive tokens.
     function recall(address to) external;

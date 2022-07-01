@@ -7,12 +7,15 @@ import {FranchiserFactory} from "../src/FranchiserFactory.sol";
 import {Franchiser} from "../src/Franchiser.sol";
 
 library Utils {
-    address private constant alice = 0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa;
-    address private constant bob = 0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB;
-    address private constant carol = 0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC;
-    address private constant dave = 0xDDdDddDdDdddDDddDDddDDDDdDdDDdDDdDDDDDDd;
-    address private constant erin = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-    address private constant frank = 0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF;
+    address internal constant alice =
+        0xaAaAaAaaAaAaAaaAaAAAAAAAAaaaAaAaAaaAaaAa;
+    address internal constant bob = 0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB;
+    address internal constant carol =
+        0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC;
+    address internal constant dave = 0xDDdDddDdDdddDDddDDddDDDDdDdDDdDDdDDDDDDd;
+    address internal constant erin = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    address internal constant frank =
+        0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF;
 
     function nestVertical(
         uint256 levels,
