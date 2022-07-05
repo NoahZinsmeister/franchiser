@@ -210,6 +210,36 @@ contract FranchiserTest is Test, IFranchiserErrors, IFranchiserEvents {
         assertEq(votingToken.balanceOf(address(returnedFranchiser)), 50);
     }
 
+    function testSubDelegateManyRevertsArrayLengthMismatch() public {
+        franchiser.initialize(Utils.alice, Utils.bob, 2);
+
+        address[] memory subDelegatees = new address[](0);
+        uint256[] memory amounts = new uint256[](1);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ArrayLengthMismatch.selector, 0, 1)
+        );
+        vm.prank(Utils.bob);
+        franchiser.subDelegateMany(subDelegatees, amounts);
+    }
+
+    function testSubDelegateMany() public {
+        franchiser.initialize(Utils.alice, Utils.bob, 2);
+
+        address[] memory subDelegatees = new address[](2);
+        subDelegatees[0] = Utils.carol;
+        subDelegatees[1] = Utils.dave;
+
+        uint256[] memory amounts = new uint256[](2);
+
+        vm.prank(Utils.bob);
+        Franchiser[] memory franchisers = franchiser.subDelegateMany(
+            subDelegatees,
+            amounts
+        );
+        assertEq(franchisers.length, 2);
+    }
+
     function testUnSubDelegateRevertsNotDelegatee() public {
         franchiser.initialize(Utils.alice, Utils.bob, 1);
         vm.prank(Utils.bob);
@@ -249,6 +279,21 @@ contract FranchiserTest is Test, IFranchiserErrors, IFranchiserEvents {
 
         assertEq(franchiser.subDelegatees(), new address[](0));
         assertEq(votingToken.balanceOf(address(franchiser)), 100);
+    }
+
+    function testUnSubDelegateMany() public {
+        franchiser.initialize(Utils.alice, Utils.bob, 2);
+
+        address[] memory subDelegatees = new address[](2);
+        subDelegatees[0] = Utils.carol;
+        subDelegatees[1] = Utils.dave;
+
+        vm.startPrank(Utils.bob);
+        franchiser.subDelegate(Utils.carol, 0);
+        franchiser.subDelegate(Utils.dave, 0);
+
+        franchiser.unSubDelegateMany(subDelegatees);
+        vm.stopPrank();
     }
 
     function testRecallRevertsUNAUTHORIZED() public {

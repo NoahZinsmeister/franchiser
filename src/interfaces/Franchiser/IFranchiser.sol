@@ -75,6 +75,15 @@ interface IFranchiser is IFranchiserErrors, IFranchiserEvents {
         view
         returns (Franchiser franchiser);
 
+    /// @notice Calls subDelegate many times.
+    /// @param subDelegatees The addresses that will receive voting power.
+    /// @param amounts The amounts of voting power.
+    /// @return franchisers The Franchiser contracts.
+    function subDelegateMany(
+        address[] calldata subDelegatees,
+        uint256[] calldata amounts
+    ) external returns (Franchiser[] memory franchisers);
+
     /// @notice Delegates `amount` of `votingToken` to `subDelegatee`.
     /// @dev Can only be called by the `delegatee`. The Franchiser associated
     ///      with the `subDelegatee` must not already be active.
@@ -90,6 +99,10 @@ interface IFranchiser is IFranchiserErrors, IFranchiserEvents {
     ///      with the `subDelegatee` does not exist, or the address is not a `subDelegatee`.
     /// @param subDelegatee The address that voting power will be removed from.
     function unSubDelegate(address subDelegatee) external;
+
+    /// @notice Calls unSubDelegate many times.
+    /// @param subDelegatees The addresses that voting power will be removed from.
+    function unSubDelegateMany(address[] calldata subDelegatees) external;
 
     /// @notice Transfers the contract's balance of `votingToken`, as well as the balance
     ///         of all nested Franchiser contracts associated with each `subDelegatee`, to `to`.
