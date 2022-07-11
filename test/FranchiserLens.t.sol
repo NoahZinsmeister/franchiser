@@ -78,14 +78,14 @@ contract FranchiserLensTest is Test {
         IFranchiserLens.Delegation[] memory verticalDelegations = franchiserLens
             .getVerticalDelegations(franchisers[1]);
         assertEq(verticalDelegations.length, 2);
-        assertEq(verticalDelegations[0].delegator, Utils.bob);
-        assertEq(verticalDelegations[0].delegatee, Utils.carol);
+        assertEq(verticalDelegations[1].delegator, Utils.bob);
+        assertEq(verticalDelegations[1].delegatee, Utils.carol);
         assertEq(
-            address(verticalDelegations[0].franchiser),
+            address(verticalDelegations[1].franchiser),
             address(franchisers[1])
         );
         assertEq(
-            keccak256(abi.encode(verticalDelegations[1])),
+            keccak256(abi.encode(verticalDelegations[0])),
             keccak256(abi.encode(rootDelegation))
         );
 
@@ -118,14 +118,14 @@ contract FranchiserLensTest is Test {
         IFranchiserLens.Delegation[]
             memory verticalDelegations = new IFranchiserLens.Delegation[](5);
         verticalDelegations[0] = IFranchiserLens.Delegation({
-            delegator: Utils.erin,
-            delegatee: Utils.frank,
-            franchiser: franchisers[4]
+            delegator: Utils.alice,
+            delegatee: Utils.bob,
+            franchiser: franchisers[0]
         });
         verticalDelegations[1] = IFranchiserLens.Delegation({
-            delegator: Utils.dave,
-            delegatee: Utils.erin,
-            franchiser: franchisers[3]
+            delegator: Utils.bob,
+            delegatee: Utils.carol,
+            franchiser: franchisers[1]
         });
         verticalDelegations[2] = IFranchiserLens.Delegation({
             delegator: Utils.carol,
@@ -133,14 +133,14 @@ contract FranchiserLensTest is Test {
             franchiser: franchisers[2]
         });
         verticalDelegations[3] = IFranchiserLens.Delegation({
-            delegator: Utils.bob,
-            delegatee: Utils.carol,
-            franchiser: franchisers[1]
+            delegator: Utils.dave,
+            delegatee: Utils.erin,
+            franchiser: franchisers[3]
         });
         verticalDelegations[4] = IFranchiserLens.Delegation({
-            delegator: Utils.alice,
-            delegatee: Utils.bob,
-            franchiser: franchisers[0]
+            delegator: Utils.erin,
+            delegatee: Utils.frank,
+            franchiser: franchisers[4]
         });
         assertEq(
             keccak256(

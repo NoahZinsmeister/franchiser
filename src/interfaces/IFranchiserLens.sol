@@ -67,4 +67,13 @@ interface IFranchiserLens is IFranchiserImmutableState {
         external
         view
         returns (DelegationWithVotes[][] memory delegationsWithVotes);
+
+    /// @notice Calls getAllDelegations with the franchiser associated with `owner` and `delegatee`.
+    /// @param owner The `owner`.
+    /// @param delegatee The `delegatee`.
+    /// @return delegationsWithVotes The `delegationsWithVotes`.
+    function getAllDelegations(address owner, address delegatee)
+        external
+        view
+        returns (DelegationWithVotes[][] memory delegationsWithVotes);
 }
