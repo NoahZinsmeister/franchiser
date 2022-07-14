@@ -181,8 +181,8 @@ contract FranchiserFactoryTest is
         franchiserFactory.recall(address(2), address(1));
         uint256 gasUsed = gasBefore - gasleft();
         unchecked {
-            assertGt(gasUsed, 5 * 1e6);
-            assertLt(gasUsed, 6 * 1e6);
+            assertGt(gasUsed, 2 * 1e6);
+            assertLt(gasUsed, 5 * 1e6);
             console2.log(gasUsed);
         }
         assertEq(votingToken.balanceOf(address(1)), 64);
