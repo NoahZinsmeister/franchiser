@@ -15,15 +15,15 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
     using SafeTransferLib for ERC20;
 
     /// @inheritdoc IFranchiserFactory
-    uint96 public constant initialMaximumSubDelegatees = 2**3; // 8
+    uint96 public constant INITIAL_MAXIMUM_SUBDELEGATEES = 2**3; // 8
 
     /// @inheritdoc IFranchiserFactory
     Franchiser public immutable franchiserImplementation;
 
-    constructor(IVotingToken votingToken)
-        FranchiserImmutableState(votingToken)
+    constructor(IVotingToken votingToken_)
+        FranchiserImmutableState(votingToken_)
     {
-        franchiserImplementation = new Franchiser(votingToken);
+        franchiserImplementation = new Franchiser(votingToken_);
     }
 
     function getSalt(address owner, address delegatee)
@@ -65,7 +65,7 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
             franchiser.initialize(
                 msg.sender,
                 delegatee,
-                initialMaximumSubDelegatees
+                INITIAL_MAXIMUM_SUBDELEGATEES
             );
             emit NewFranchiser(msg.sender, delegatee, franchiser);
         }
@@ -79,14 +79,14 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
 
     /// @inheritdoc IFranchiserFactory
     function fundMany(address[] calldata delegatees, uint256[] calldata amounts)
-        public
+        external
         returns (Franchiser[] memory franchisers)
     {
         if (delegatees.length != amounts.length)
             revert ArrayLengthMismatch(delegatees.length, amounts.length);
         franchisers = new Franchiser[](delegatees.length);
         unchecked {
-            for (uint256 i; i < delegatees.length; i++)
+            for (uint256 i = 0; i < delegatees.length; i++)
                 franchisers[i] = fund(delegatees[i], amounts[i]);
         }
     }
@@ -104,7 +104,7 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
         if (delegatees.length != tos.length)
             revert ArrayLengthMismatch(delegatees.length, tos.length);
         unchecked {
-            for (uint256 i; i < delegatees.length; i++)
+            for (uint256 i = 0; i < delegatees.length; i++)
                 recall(delegatees[i], tos[i]);
         }
     }
@@ -155,11 +155,11 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
         if (delegatees.length != amounts.length)
             revert ArrayLengthMismatch(delegatees.length, amounts.length);
         uint256 amount;
-        for (uint256 i; i < delegatees.length; i++) amount += amounts[i];
+        for (uint256 i = 0; i < delegatees.length; i++) amount += amounts[i];
         permit(amount, deadline, v, r, s);
         franchisers = new Franchiser[](delegatees.length);
         unchecked {
-            for (uint256 i; i < delegatees.length; i++)
+            for (uint256 i = 0; i < delegatees.length; i++)
                 franchisers[i] = fund(delegatees[i], amounts[i]);
         }
     }

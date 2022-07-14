@@ -9,42 +9,37 @@ import {Franchiser} from "../../Franchiser.sol";
 interface IFranchiser is IFranchiserErrors, IFranchiserEvents {
     /// @notice The value resonsible for decaying `maximumSubDelegatees`.
     /// @dev At each nesting level, `maximumSubDelegatees` is divided by this factor.
-    /// @return decayFactor The `decayFactor`.
-    function decayFactor() external view returns (uint96 decayFactor);
+    /// @return The `DECAY_FACTOR`.
+    function DECAY_FACTOR() external view returns (uint96);
 
     /// @notice The implementation contract used to clone Franchiser contracts.
     /// @dev Used as part of an EIP-1167 proxy minimal proxy setup.
-    /// @return franchiserImplementation The Franchiser implementation contract.
-    function franchiserImplementation()
-        external
-        view
-        returns (Franchiser franchiserImplementation);
+    /// @return The Franchiser implementation contract.
+    function franchiserImplementation() external view returns (Franchiser);
 
     /// @notice The address that delegated tokens to this address.
     /// @dev Is derived from the `delegatee` of the `owner`, except for
     ///      direct descendants of the FranchiserFactory.
     ///      Never changes after being set via initialize.
-    /// @return delegator The `delegator`.
-    function delegator() external view returns (address delegator);
+    /// @return The `delegator`.
+    function delegator() external view returns (address);
 
     /// @notice The `delegatee` of the contract.
     /// @dev Never changes after being set via initialize.
     ///      Packed with `maximumSubDelegatees`.
-    /// @return delegatee The `delegatee`.
-    function delegatee() external returns (address delegatee);
+    /// @return The `delegatee`.
+    function delegatee() external returns (address);
 
     /// @notice The maximum number of `subDelegatee` addresses that the contract
     ///         can have at any one time.
     /// @dev Never changes after being set via initialize.
     ///      Packed with `delegatee`.
-    /// @return maximumSubDelegatees The maximum number of `subDelegatee` addresses.
-    function maximumSubDelegatees()
-        external
-        returns (uint96 maximumSubDelegatees);
+    /// @return The maximum number of `subDelegatee` addresses.
+    function maximumSubDelegatees() external returns (uint96);
 
     /// @notice The list of current `subDelegatee` addresses.
-    /// @return subDelegatees The current `subDelegatee` addresses.
-    function subDelegatees() external returns (address[] memory subDelegatees);
+    /// @return The current `subDelegatee` addresses.
+    function subDelegatees() external returns (address[] memory);
 
     /// @notice Calls initialize with `delegator` set to address(0).
     /// @dev Used for all Franchiser initialization beyond the first level of nesting.

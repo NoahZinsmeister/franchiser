@@ -9,17 +9,19 @@ import {Franchiser} from "./Franchiser.sol";
 
 contract FranchiserLens is IFranchiserLens, FranchiserImmutableState {
     /// @dev The asserts in the constructor ensure that this is safe to encode as a constant.
-    uint256 private constant maximumNestingDepth = 5; // log2(8) + 2
+    uint256 private constant MAXIMUM_NESTING_DEPTH = 5; // log2(8) + 2
 
     /// @inheritdoc IFranchiserLens
     FranchiserFactory public immutable franchiserFactory;
 
-    constructor(IVotingToken votingToken, FranchiserFactory franchiserFactory_)
-        FranchiserImmutableState(votingToken)
+    constructor(IVotingToken votingToken_, FranchiserFactory franchiserFactory_)
+        FranchiserImmutableState(votingToken_)
     {
         franchiserFactory = franchiserFactory_;
-        assert(franchiserFactory.initialMaximumSubDelegatees() == 8);
-        assert(franchiserFactory.franchiserImplementation().decayFactor() == 2);
+        assert(franchiserFactory.INITIAL_MAXIMUM_SUBDELEGATEES() == 8);
+        assert(
+            franchiserFactory.franchiserImplementation().DECAY_FACTOR() == 2
+        );
     }
 
     /// @inheritdoc IFranchiserLens
@@ -44,8 +46,8 @@ contract FranchiserLens is IFranchiserLens, FranchiserImmutableState {
         view
         returns (Delegation[] memory delegations)
     {
-        uint256 delegatorsSeen;
-        Delegation[maximumNestingDepth] memory delegatorsTemporary;
+        uint256 delegatorsSeen = 0;
+        Delegation[MAXIMUM_NESTING_DEPTH] memory delegatorsTemporary;
         unchecked {
             while (address(franchiser) != address(franchiserFactory)) {
                 delegatorsTemporary[delegatorsSeen++] = Delegation({
@@ -56,7 +58,7 @@ contract FranchiserLens is IFranchiserLens, FranchiserImmutableState {
                 franchiser = Franchiser(franchiser.owner());
             }
             delegations = new Delegation[](delegatorsSeen);
-            for (uint256 i; i < delegatorsSeen; i++)
+            for (uint256 i = 0; i < delegatorsSeen; i++)
                 delegations[delegatorsSeen - i - 1] = delegatorsTemporary[i];
         }
     }
@@ -70,7 +72,7 @@ contract FranchiserLens is IFranchiserLens, FranchiserImmutableState {
         address[] memory subDelegatees = franchiser.subDelegatees();
         delegations = new Delegation[](subDelegatees.length);
         unchecked {
-            for (uint256 i; i < subDelegatees.length; i++) {
+            for (uint256 i = 0; i < subDelegatees.length; i++) {
                 Franchiser subDelegateeFranchiser = franchiser.getFranchiser(
                     subDelegatees[i]
                 );
@@ -103,19 +105,19 @@ contract FranchiserLens is IFranchiserLens, FranchiserImmutableState {
         view
         returns (DelegationWithVotes[][] memory delegationsWithVotes)
     {
-        DelegationWithVotes[][maximumNestingDepth]
+        DelegationWithVotes[][MAXIMUM_NESTING_DEPTH]
             memory delegationsWithVotesTemporary;
         Delegation memory rootDelegation = getRootDelegation(franchiser);
         delegationsWithVotesTemporary[0] = new DelegationWithVotes[](1);
         delegationsWithVotesTemporary[0][0] = getVotes(rootDelegation);
         unchecked {
-            for (uint256 i = 1; i < maximumNestingDepth; i++) {
+            for (uint256 i = 1; i < MAXIMUM_NESTING_DEPTH; i++) {
                 Delegation[][] memory descendantsNested = new Delegation[][](
                     delegationsWithVotesTemporary[i - 1].length
                 );
                 uint256 totalDescendants;
                 for (
-                    uint256 j;
+                    uint256 j = 0;
                     j < delegationsWithVotesTemporary[i - 1].length;
                     j++
                 ) {
@@ -129,16 +131,16 @@ contract FranchiserLens is IFranchiserLens, FranchiserImmutableState {
                         totalDescendants
                     );
                 uint256 descendantsIndex;
-                for (uint256 j; j < descendantsNested.length; j++)
-                    for (uint256 k; k < descendantsNested[j].length; k++)
+                for (uint256 j = 0; j < descendantsNested.length; j++)
+                    for (uint256 k = 0; k < descendantsNested[j].length; k++)
                         descendantsWithVotes[descendantsIndex++] = getVotes(
                             descendantsNested[j][k]
                         );
                 delegationsWithVotesTemporary[i] = descendantsWithVotes;
             }
-            uint256 delegationsWithVotesIndex;
+            uint256 delegationsWithVotesIndex = 0;
             while (
-                delegationsWithVotesIndex < maximumNestingDepth &&
+                delegationsWithVotesIndex < MAXIMUM_NESTING_DEPTH &&
                 delegationsWithVotesTemporary[delegationsWithVotesIndex]
                     .length !=
                 0
@@ -146,7 +148,7 @@ contract FranchiserLens is IFranchiserLens, FranchiserImmutableState {
             delegationsWithVotes = new DelegationWithVotes[][](
                 delegationsWithVotesIndex
             );
-            for (uint256 i; i < delegationsWithVotes.length; i++)
+            for (uint256 i = 0; i < delegationsWithVotes.length; i++)
                 delegationsWithVotes[i] = delegationsWithVotesTemporary[i];
         }
     }

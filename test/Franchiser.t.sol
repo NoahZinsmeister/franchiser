@@ -27,7 +27,7 @@ contract FranchiserTest is Test, IFranchiserErrors, IFranchiserEvents {
     }
 
     function testSetUp() public {
-        assertEq(franchiserImplementation.decayFactor(), 2);
+        assertEq(franchiserImplementation.DECAY_FACTOR(), 2);
         assertEq(
             address(franchiserImplementation.franchiserImplementation()),
             address(franchiserImplementation)
@@ -38,7 +38,7 @@ contract FranchiserTest is Test, IFranchiserErrors, IFranchiserEvents {
         assertEq(franchiserImplementation.maximumSubDelegatees(), 0);
         assertEq(franchiserImplementation.subDelegatees(), new address[](0));
 
-        assertEq(franchiser.decayFactor(), 2);
+        assertEq(franchiser.DECAY_FACTOR(), 2);
         assertEq(
             address(franchiser.franchiserImplementation()),
             address(franchiserImplementation)

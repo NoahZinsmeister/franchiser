@@ -30,10 +30,8 @@ interface IFranchiserLens is IFranchiserImmutableState {
     }
 
     /// @notice The deployed `franchiserFactory`.
-    /// @return franchiserFactory The `franchiserFactory`.
-    function franchiserFactory()
-        external
-        returns (FranchiserFactory franchiserFactory);
+    /// @return The `franchiserFactory`.
+    function franchiserFactory() external returns (FranchiserFactory);
 
     /// @notice Gets the root delegation for any nested franchiser.
     /// @param franchiser The `franchiser`.

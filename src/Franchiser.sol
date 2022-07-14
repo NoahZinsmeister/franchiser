@@ -17,7 +17,7 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
     using SafeTransferLib for ERC20;
 
     /// @inheritdoc IFranchiser
-    uint96 public constant decayFactor = 2;
+    uint96 public constant DECAY_FACTOR = 2;
 
     /// @inheritdoc IFranchiser
     Franchiser public immutable franchiserImplementation;
@@ -41,7 +41,7 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
     }
 
     /// @inheritdoc IFranchiser
-    function subDelegatees() public view returns (address[] memory) {
+    function subDelegatees() external view returns (address[] memory) {
         return _subDelegatees.values();
     }
 
@@ -51,8 +51,8 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
         _;
     }
 
-    constructor(IVotingToken votingToken)
-        FranchiserImmutableState(votingToken)
+    constructor(IVotingToken votingToken_)
+        FranchiserImmutableState(votingToken_)
         Owned(address(0))
     {
         franchiserImplementation = Franchiser(address(this));
@@ -134,12 +134,13 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
             );
             franchiser.initialize(
                 subDelegatee,
-                maximumSubDelegatees / decayFactor
+                maximumSubDelegatees / DECAY_FACTOR
             );
         }
 
         ERC20(address(votingToken)).safeTransfer(address(franchiser), amount);
-        _subDelegatees.add(subDelegatee);
+        bool added = _subDelegatees.add(subDelegatee);
+        assert(added);
         emit SubDelegateeActivated(subDelegatee, franchiser);
     }
 
@@ -152,13 +153,13 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
             revert ArrayLengthMismatch(subDelegatees_.length, amounts.length);
         franchisers = new Franchiser[](subDelegatees_.length);
         unchecked {
-            for (uint256 i; i < subDelegatees_.length; i++)
+            for (uint256 i = 0; i < subDelegatees_.length; i++)
                 franchisers[i] = subDelegate(subDelegatees_[i], amounts[i]);
         }
     }
 
     /// @inheritdoc IFranchiser
-    function unSubDelegate(address subDelegatee) public onlyDelegatee {
+    function unSubDelegate(address subDelegatee) external onlyDelegatee {
         _unSubDelegate(subDelegatee, false);
     }
 
@@ -171,7 +172,8 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
         if (assumeExistence || address(franchiser).isContract())
             franchiser.recall(address(this));
         if (assumeExistence || _subDelegatees.contains(subDelegatee)) {
-            _subDelegatees.remove(subDelegatee);
+            bool removed = _subDelegatees.remove(subDelegatee);
+            assert(removed);
             emit SubDelegateeDeactivated(subDelegatee, franchiser);
         }
     }
@@ -179,13 +181,13 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
     /// @inheritdoc IFranchiser
     function unSubDelegateMany(address[] calldata subDelegatees_) external {
         unchecked {
-            for (uint256 i; i < subDelegatees_.length; i++)
+            for (uint256 i = 0; i < subDelegatees_.length; i++)
                 _unSubDelegate(subDelegatees_[i], false);
         }
     }
 
     /// @inheritdoc IFranchiser
-    function recall(address to) public onlyOwner {
+    function recall(address to) external onlyOwner {
         uint256 numberOfSubDelegatees = _subDelegatees.length();
         unchecked {
             while (numberOfSubDelegatees != 0)

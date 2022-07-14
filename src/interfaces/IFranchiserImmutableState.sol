@@ -6,6 +6,6 @@ import {IVotingToken} from "./IVotingToken.sol";
 /// @title Interface for immutable state shared across Franchiser-related contracts.
 interface IFranchiserImmutableState {
     /// @notice The `votingToken` of the contract.
-    /// @return votingToken The `votingToken`.
-    function votingToken() external returns (IVotingToken votingToken);
+    /// @return The `votingToken`.
+    function votingToken() external returns (IVotingToken);
 }

@@ -16,18 +16,13 @@ interface IFranchiserFactory is
     ///         contract can have at any one time.
     /// @dev Decreases by half every level of nesting.
     ///      Of type uint96 for storage packing in Franchiser contracts.
-    /// @return initialMaximumSubDelegatees The intial maximum number of `subDelegatee` addresses.
-    function initialMaximumSubDelegatees()
-        external
-        returns (uint96 initialMaximumSubDelegatees);
+    /// @return The intial maximum number of `subDelegatee` addresses.
+    function INITIAL_MAXIMUM_SUBDELEGATEES() external returns (uint96);
 
     /// @notice The implementation contract used to clone Franchiser contracts.
     /// @dev Used as part of an EIP-1167 proxy minimal proxy setup.
-    /// @return franchiserImplementation The Franchiser implementation contract.
-    function franchiserImplementation()
-        external
-        view
-        returns (Franchiser franchiserImplementation);
+    /// @return The Franchiser implementation contract.
+    function franchiserImplementation() external view returns (Franchiser);
 
     /// @notice Looks up the Franchiser associated with the `owner` and `delegatee`.
     /// @dev Returns the address of the Franchiser even it it does not yet exist,

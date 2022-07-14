@@ -25,8 +25,10 @@ library Utils {
     ) internal returns (Franchiser[5] memory franchisers) {
         assert(levels != 0);
         assert(levels <= 5);
-        assert(franchiserFactory.initialMaximumSubDelegatees() == 8);
-        assert(franchiserFactory.franchiserImplementation().decayFactor() == 2);
+        assert(franchiserFactory.INITIAL_MAXIMUM_SUBDELEGATEES() == 8);
+        assert(
+            franchiserFactory.franchiserImplementation().DECAY_FACTOR() == 2
+        );
 
         address[5] memory delegatees = [bob, carol, dave, erin, frank];
 
@@ -60,8 +62,10 @@ library Utils {
         VotingTokenConcrete votingToken,
         FranchiserFactory franchiserFactory
     ) internal returns (Franchiser[][5] memory franchisers) {
-        assert(franchiserFactory.initialMaximumSubDelegatees() == 8);
-        assert(franchiserFactory.franchiserImplementation().decayFactor() == 2);
+        assert(franchiserFactory.INITIAL_MAXIMUM_SUBDELEGATEES() == 8);
+        assert(
+            franchiserFactory.franchiserImplementation().DECAY_FACTOR() == 2
+        );
 
         franchisers[0] = new Franchiser[](1);
         franchisers[1] = new Franchiser[](8);

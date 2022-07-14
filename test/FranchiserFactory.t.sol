@@ -26,7 +26,7 @@ contract FranchiserFactoryTest is
     }
 
     function testSetUp() public {
-        assertEq(franchiserFactory.initialMaximumSubDelegatees(), 8);
+        assertEq(franchiserFactory.INITIAL_MAXIMUM_SUBDELEGATEES(), 8);
         assertEq(
             address(franchiserFactory.franchiserImplementation()),
             address(
