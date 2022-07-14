@@ -1,6 +1,6 @@
 # Franchiser
 
-[![test](https://github.com/NoahZinsmeister/franchiser/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/NoahZinsmeister/franchiser/actions/workflows/test.yml)
+`Franchiser` allows holders of checkpoint voting tokens to selectively sub-delegate voting power while retaining full custody over their funds, as described in the [design document](https://uniswaplabs.notion.site/Franchiser-768dd0e188eb4323957c6e919c09491b).
 
 ## Running Locally
 
