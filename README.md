@@ -7,3 +7,9 @@
 - Ensure that [foundry](https://book.getfoundry.sh/) is installed on your machine
 - `forge build`
 - `forge test`
+
+## Deploying
+
+- Create and populate a .env file
+- `source .env`
+- `forge script script/Deploy.s.sol:Deploy --broadcast --private-key $PRIVATE_KEY  --rpc-url $RPC_URL [--etherscan-api-key $ETHERSCAN_API_KEY --verify]`
