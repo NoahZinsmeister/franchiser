@@ -138,9 +138,8 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
             );
         }
 
+        assert(_subDelegatees.add(subDelegatee));
         ERC20(address(votingToken)).safeTransfer(address(franchiser), amount);
-        bool added = _subDelegatees.add(subDelegatee);
-        assert(added);
         emit SubDelegateeActivated(subDelegatee, franchiser);
     }
 
@@ -169,13 +168,12 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
         private
     {
         Franchiser franchiser = getFranchiser(subDelegatee);
-        if (assumeExistence || address(franchiser).isContract())
-            franchiser.recall(address(this));
         if (assumeExistence || _subDelegatees.contains(subDelegatee)) {
-            bool removed = _subDelegatees.remove(subDelegatee);
-            assert(removed);
+            assert(_subDelegatees.remove(subDelegatee));
             emit SubDelegateeDeactivated(subDelegatee, franchiser);
         }
+        if (assumeExistence || address(franchiser).isContract())
+            franchiser.recall(address(this));
     }
 
     /// @inheritdoc IFranchiser
