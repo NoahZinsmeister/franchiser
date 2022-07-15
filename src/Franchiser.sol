@@ -72,6 +72,7 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
         // ensures that initialize can only be called once in clones
         if (delegatee_ == address(0)) revert NoDelegatee();
         if (delegatee != address(0)) revert AlreadyInitialized();
+
         owner = msg.sender;
         // only store the delegator if necessary
         if (delegator_ != address(0)) _delegator = delegator_;
@@ -119,28 +120,24 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
         onlyDelegatee
         returns (Franchiser franchiser)
     {
-        if (_subDelegatees.length() == maximumSubDelegatees)
-            revert CannotExceedMaximumSubDelegatees(maximumSubDelegatees);
-        if (_subDelegatees.contains(subDelegatee))
-            revert SubDelegateeAlreadyActive(subDelegatee);
-
         franchiser = getFranchiser(subDelegatee);
-        // deploy a new contract if necessary
-        if (!address(franchiser).isContract()) {
-            franchiser = Franchiser(
+        if (!_subDelegatees.contains(subDelegatee)) {
+            if (_subDelegatees.length() == maximumSubDelegatees)
+                revert CannotExceedMaximumSubDelegatees(maximumSubDelegatees);
+            assert(_subDelegatees.add(subDelegatee));
+            if (!address(franchiser).isContract()) {
+                // deploy a new contract if necessary
                 address(franchiserImplementation).cloneDeterministic(
                     getSalt(subDelegatee)
-                )
-            );
-            franchiser.initialize(
-                subDelegatee,
-                maximumSubDelegatees / DECAY_FACTOR
-            );
+                );
+                franchiser.initialize(
+                    subDelegatee,
+                    maximumSubDelegatees / DECAY_FACTOR
+                );
+            }
+            emit SubDelegateeActivated(subDelegatee);
         }
-
-        assert(_subDelegatees.add(subDelegatee));
         ERC20(address(votingToken)).safeTransfer(address(franchiser), amount);
-        emit SubDelegateeActivated(subDelegatee, franchiser);
     }
 
     /// @inheritdoc IFranchiser
@@ -150,6 +147,7 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
     ) external returns (Franchiser[] memory franchisers) {
         if (subDelegatees_.length != amounts.length)
             revert ArrayLengthMismatch(subDelegatees_.length, amounts.length);
+
         franchisers = new Franchiser[](subDelegatees_.length);
         unchecked {
             for (uint256 i = 0; i < subDelegatees_.length; i++)
@@ -170,9 +168,15 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
         Franchiser franchiser = getFranchiser(subDelegatee);
         if (assumeExistence || _subDelegatees.contains(subDelegatee)) {
             assert(_subDelegatees.remove(subDelegatee));
-            emit SubDelegateeDeactivated(subDelegatee, franchiser);
+            franchiser.recall(address(this));
+            emit SubDelegateeDeactivated(subDelegatee);
         }
-        if (assumeExistence || address(franchiser).isContract())
+        // this condition can only be reached if unSubDelegate is called with a subDelegatee
+        // that has a franchiser contract but isn't currently active - when this is the case,
+        // calling recall is a no-op if the franchiser doesn't have tokens, so it's fine,
+        // but in the very oddd case that the franchiser has received voting tokens out of
+        // band, this will retrieve them silently, which is also fine
+        else if (address(franchiser).isContract())
             franchiser.recall(address(this));
     }
 
@@ -187,15 +191,15 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
     /// @inheritdoc IFranchiser
     function recall(address to) external onlyOwner {
         uint256 numberOfSubDelegatees = _subDelegatees.length();
-        unchecked {
-            while (numberOfSubDelegatees != 0)
+        while (numberOfSubDelegatees != 0) {
+            unchecked {
                 _unSubDelegate(
                     // ordering isn't consistent across removals, but this works
                     _subDelegatees.at(--numberOfSubDelegatees),
                     true
                 );
+            }
         }
-
         ERC20(address(votingToken)).safeTransfer(
             to,
             votingToken.balanceOf(address(this))

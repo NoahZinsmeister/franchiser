@@ -55,21 +55,17 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
         returns (Franchiser franchiser)
     {
         franchiser = getFranchiser(msg.sender, delegatee);
-        // deploy a new contract if necessary
         if (!address(franchiser).isContract()) {
-            franchiser = Franchiser(
-                address(franchiserImplementation).cloneDeterministic(
-                    getSalt(msg.sender, delegatee)
-                )
+            // deploy a new contract if necessary
+            address(franchiserImplementation).cloneDeterministic(
+                getSalt(msg.sender, delegatee)
             );
             franchiser.initialize(
                 msg.sender,
                 delegatee,
                 INITIAL_MAXIMUM_SUBDELEGATEES
             );
-            emit NewFranchiser(msg.sender, delegatee, franchiser);
         }
-
         ERC20(address(votingToken)).safeTransferFrom(
             msg.sender,
             address(franchiser),
@@ -84,6 +80,7 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
     {
         if (delegatees.length != amounts.length)
             revert ArrayLengthMismatch(delegatees.length, amounts.length);
+
         franchisers = new Franchiser[](delegatees.length);
         unchecked {
             for (uint256 i = 0; i < delegatees.length; i++)
@@ -103,6 +100,7 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
     {
         if (delegatees.length != tos.length)
             revert ArrayLengthMismatch(delegatees.length, tos.length);
+
         unchecked {
             for (uint256 i = 0; i < delegatees.length; i++)
                 recall(delegatees[i], tos[i]);
@@ -154,7 +152,8 @@ contract FranchiserFactory is IFranchiserFactory, FranchiserImmutableState {
     ) external returns (Franchiser[] memory franchisers) {
         if (delegatees.length != amounts.length)
             revert ArrayLengthMismatch(delegatees.length, amounts.length);
-        uint256 amount;
+
+        uint256 amount = 0;
         for (uint256 i = 0; i < delegatees.length; i++) amount += amounts[i];
         permit(amount, deadline, v, r, s);
         franchisers = new Franchiser[](delegatees.length);

@@ -3,7 +3,7 @@ pragma solidity 0.8.15;
 
 import {Test, console2} from "forge-std/Test.sol";
 import {IFranchiserFactoryErrors} from "../src/interfaces/FranchiserFactory/IFranchiserFactoryErrors.sol";
-import {IFranchiserFactoryEvents} from "../src/interfaces/FranchiserFactory/IFranchiserFactoryEvents.sol";
+import {IFranchiserEvents} from "../src/interfaces/Franchiser/IFranchiserEvents.sol";
 import {VotingTokenConcrete} from "./VotingTokenConcrete.sol";
 import {IVotingToken} from "../src/interfaces/IVotingToken.sol";
 import {FranchiserFactory} from "../src/FranchiserFactory.sol";
@@ -13,7 +13,7 @@ import {Utils} from "./Utils.sol";
 contract FranchiserFactoryTest is
     Test,
     IFranchiserFactoryErrors,
-    IFranchiserFactoryEvents
+    IFranchiserEvents
 {
     VotingTokenConcrete private votingToken;
     FranchiserFactory private franchiserFactory;
@@ -59,9 +59,8 @@ contract FranchiserFactoryTest is
             Utils.bob
         );
 
-        vm.expectEmit(true, true, false, true, address(franchiserFactory));
-        emit NewFranchiser(Utils.alice, Utils.bob, expectedFranchiser);
-
+        vm.expectEmit(true, true, true, true, address(expectedFranchiser));
+        emit Initialized(address(franchiserFactory), Utils.alice, Utils.bob, 8);
         vm.prank(Utils.alice);
         Franchiser franchiser = franchiserFactory.fund(Utils.bob, 0);
 
@@ -69,6 +68,13 @@ contract FranchiserFactoryTest is
         assertEq(franchiser.owner(), address(franchiserFactory));
         assertEq(franchiser.delegatee(), Utils.bob);
         assertEq(votingToken.delegates(address(franchiser)), Utils.bob);
+    }
+
+    function testFundCanCallTwice() public {
+        vm.startPrank(Utils.alice);
+        franchiserFactory.fund(Utils.bob, 0);
+        franchiserFactory.fund(Utils.bob, 0);
+        vm.stopPrank();
     }
 
     function testFundNonZeroRevertsTRANSFER_FROM_FAILED() public {

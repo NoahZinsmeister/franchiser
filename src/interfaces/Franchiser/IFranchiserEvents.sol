@@ -19,17 +19,9 @@ interface IFranchiserEvents {
 
     /// @notice Emitted when a `subDelegatee` is activated.
     /// @param subDelegatee The `subDelegatee`.
-    /// @param franchiser The Franchiser associated with the `subDelegatee`.
-    event SubDelegateeActivated(
-        address indexed subDelegatee,
-        Franchiser franchiser
-    );
+    event SubDelegateeActivated(address indexed subDelegatee);
 
     /// @notice Emitted when a `subDelegatee` is deactivated.
     /// @param subDelegatee The `subDelegatee`.
-    /// @param franchiser The Franchiser associated with the `subDelegatee`.
-    event SubDelegateeDeactivated(
-        address indexed subDelegatee,
-        Franchiser franchiser
-    );
+    event SubDelegateeDeactivated(address indexed subDelegatee);
 }

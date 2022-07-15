@@ -20,10 +20,6 @@ interface IFranchiserErrors {
     /// @param maximumSubDelegatees The maximum (and current) number of `subDelegatees`.
     error CannotExceedMaximumSubDelegatees(uint256 maximumSubDelegatees);
 
-    /// @notice Thrown when the `subDelegatee` being added is already active.
-    /// @param subDelegatee The `subDelegatee` being added.
-    error SubDelegateeAlreadyActive(address subDelegatee);
-
     /// @notice Emitted when two array arguments have different cardinalities.
     /// @param length0 The length of the first array argument.
     /// @param length1 The length of the second array argument.

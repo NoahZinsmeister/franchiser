@@ -2,14 +2,12 @@
 pragma solidity ^0.8;
 
 import {IFranchiserFactoryErrors} from "./IFranchiserFactoryErrors.sol";
-import {IFranchiserFactoryEvents} from "./IFranchiserFactoryEvents.sol";
 import {IFranchiserImmutableState} from "../IFranchiserImmutableState.sol";
 import {Franchiser} from "../../Franchiser.sol";
 
 /// @title Interface for the FranchiserFactory contract.
 interface IFranchiserFactory is
     IFranchiserFactoryErrors,
-    IFranchiserFactoryEvents,
     IFranchiserImmutableState
 {
     /// @notice The initial value for the maximum number of `subDelegatee` addresses that a Franchiser

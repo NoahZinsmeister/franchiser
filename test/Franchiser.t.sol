@@ -139,7 +139,7 @@ contract FranchiserTest is Test, IFranchiserErrors, IFranchiserEvents {
         vm.expectEmit(true, true, false, true, address(expectedFranchiser));
         emit Initialized(address(franchiser), Utils.bob, Utils.carol, 0);
         vm.expectEmit(true, false, false, true, address(franchiser));
-        emit SubDelegateeActivated(Utils.carol, expectedFranchiser);
+        emit SubDelegateeActivated(Utils.carol);
 
         vm.prank(Utils.bob);
         Franchiser returnedFranchiser = franchiser.subDelegate(Utils.carol, 0);
@@ -173,19 +173,12 @@ contract FranchiserTest is Test, IFranchiserErrors, IFranchiserEvents {
         assertEq(daveFranchiser.maximumSubDelegatees(), 0);
     }
 
-    function testSubDelegateRevertsSubDelegateeAlreadyActive() public {
+    function testSubDelegateCanCallTwice() public {
         franchiser.initialize(Utils.alice, Utils.bob, 2);
-        vm.prank(Utils.bob);
+        vm.startPrank(Utils.bob);
         franchiser.subDelegate(Utils.carol, 0);
-
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                SubDelegateeAlreadyActive.selector,
-                Utils.carol
-            )
-        );
-        vm.prank(Utils.bob);
         franchiser.subDelegate(Utils.carol, 0);
+        vm.stopPrank();
     }
 
     function testSubDelegateNonZeroFull() public {
@@ -259,9 +252,21 @@ contract FranchiserTest is Test, IFranchiserErrors, IFranchiserEvents {
         franchiser.initialize(Utils.alice, Utils.bob, 1);
 
         vm.startPrank(Utils.bob);
-        Franchiser returnedFranchiser = franchiser.subDelegate(Utils.carol, 0);
+        franchiser.subDelegate(Utils.carol, 0);
         vm.expectEmit(true, false, false, true, address(franchiser));
-        emit SubDelegateeDeactivated(Utils.carol, returnedFranchiser);
+        emit SubDelegateeDeactivated(Utils.carol);
+        franchiser.unSubDelegate(Utils.carol);
+        vm.stopPrank();
+
+        assertEq(franchiser.subDelegatees(), new address[](0));
+    }
+
+    function testUnSubDelegateCanCallTwice() public {
+        franchiser.initialize(Utils.alice, Utils.bob, 1);
+
+        vm.startPrank(Utils.bob);
+        franchiser.subDelegate(Utils.carol, 0);
+        franchiser.unSubDelegate(Utils.carol);
         franchiser.unSubDelegate(Utils.carol);
         vm.stopPrank();
 
