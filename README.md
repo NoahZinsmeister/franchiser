@@ -6,7 +6,8 @@
 
 - Ensure that [foundry](https://book.getfoundry.sh/) is installed on your machine
 - `forge build`
-- `forge test`
+- `forge test --no-match-contract Integration`
+- `forge test --match-contract Integration --fork-url $FORK_URL`
 
 ## Deploying
 
