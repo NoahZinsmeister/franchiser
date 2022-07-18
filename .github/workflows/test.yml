@@ -33,7 +33,14 @@ jobs:
           forge build --sizes
         id: build
 
-      - name: Run Forge tests
+      - name: Run Forge unit tests
         run: |
-          forge test -vvv
-        id: test
+          forge test -vvv --no-match-contract Integration
+        id: unit-test
+
+      - name: Run Forge integration tests
+        env:
+          FORK_URL: ${{ secrets.FORK_URL }}
+        run: |
+          forge test -vvv --match-contract Integration --fork-url $FORK_URL
+        id: integration-test
