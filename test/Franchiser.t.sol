@@ -296,9 +296,30 @@ contract FranchiserTest is Test, IFranchiserErrors, IFranchiserEvents {
         vm.startPrank(Utils.bob);
         franchiser.subDelegate(Utils.carol, 0);
         franchiser.subDelegate(Utils.dave, 0);
-
         franchiser.unSubDelegateMany(subDelegatees);
         vm.stopPrank();
+    }
+
+    function testUnSubDelegateManyRevertsNotDelegatee() public {
+        franchiser.initialize(Utils.alice, Utils.bob, 2);
+
+        address[] memory subDelegatees = new address[](2);
+        subDelegatees[0] = Utils.carol;
+        subDelegatees[1] = Utils.dave;
+
+        vm.startPrank(Utils.bob);
+        franchiser.subDelegate(Utils.carol, 0);
+        franchiser.subDelegate(Utils.dave, 0);
+        vm.stopPrank();
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                NotDelegatee.selector,
+                Utils.alice,
+                Utils.bob
+            )
+        );
+        vm.prank(Utils.alice);
+        franchiser.unSubDelegateMany(subDelegatees);
     }
 
     function testRecallRevertsUNAUTHORIZED() public {
