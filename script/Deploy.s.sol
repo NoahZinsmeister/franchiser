@@ -8,7 +8,7 @@ import {FranchiserFactory} from "../src/FranchiserFactory.sol";
 import {FranchiserLens} from "../src/FranchiserLens.sol";
 
 contract Deploy is Script {
-    IVotingToken public constant UNI =
+    IVotingToken private constant UNI =
         IVotingToken(0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984);
 
     function run() public {

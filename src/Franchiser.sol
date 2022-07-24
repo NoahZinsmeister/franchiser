@@ -174,7 +174,7 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
         // this condition can only be reached if unSubDelegate is called with a subDelegatee
         // that has a franchiser contract but isn't currently active - when this is the case,
         // calling recall is a no-op if the franchiser doesn't have tokens, so it's fine,
-        // but in the very oddd case that the franchiser has received voting tokens out of
+        // but in the very odd case that the franchiser has received voting tokens out of
         // band, this will retrieve them silently, which is also fine
         else if (address(franchiser).isContract())
             franchiser.recall(address(this));
