@@ -181,7 +181,10 @@ contract Franchiser is IFranchiser, FranchiserImmutableState, Owned {
     }
 
     /// @inheritdoc IFranchiser
-    function unSubDelegateMany(address[] calldata subDelegatees_) external {
+    function unSubDelegateMany(address[] calldata subDelegatees_)
+        external
+        onlyDelegatee
+    {
         unchecked {
             for (uint256 i = 0; i < subDelegatees_.length; i++)
                 _unSubDelegate(subDelegatees_[i], false);
