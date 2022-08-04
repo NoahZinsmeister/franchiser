@@ -1,6 +1,6 @@
 # Franchiser
 
-`Franchiser` allows holders of checkpoint voting tokens to selectively sub-delegate voting power while retaining full custody over their funds, as described in the [design document](https://uniswaplabs.notion.site/Franchiser-768dd0e188eb4323957c6e919c09491b).
+`Franchiser` allows holders of checkpoint voting tokens to selectively sub-delegate voting power while retaining full custody over their funds, as described in the [design document](./spec.md).
 
 ## Running Locally
 
