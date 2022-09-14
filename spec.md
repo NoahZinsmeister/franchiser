@@ -20,4 +20,4 @@ Imagine a `FranchiserFactory` contract designed to allocate voting tokens, with 
     2. The `delegatee` may recall any delegated tokens on demand.
     3. The maximum allowable number of `subDelegatees` varies. The `delegatee` who was granted voting power by an `owner` may designate up to 8 `subDelegatees`. Each of those may then specify 4 `subDelegatees` in turn, then 2, then 1, then 0.
 
-Note that at any level of nesting, a `delegatee` (or `owner`) always has the ability to recall any and all tokens they or any subsidiaries have delegated. The maximum number of nested `delegatees`/`subDelegatees` that any one `owner` could be associated with is 16 (8 + 8\*4 + 8\*4\*2 + 8\*4\*2), which costs about ~5m gas to fully unwind.
+Note that at any level of nesting, a `delegatee` (or `owner`) always has the ability to recall any and all tokens they or any subsidiaries have delegated. The maximum number of nested `delegatees`/`subDelegatees` that any one `owner` could be associated with is 168 (8 + 8\*4 + 8\*4\*2 + 8\*4\*2), which costs about ~5m gas to fully unwind.
