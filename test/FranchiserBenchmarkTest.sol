@@ -11,8 +11,6 @@ import {IVotingToken} from "../src/interfaces/IVotingToken.sol";
 import {FranchiserLens} from "../src/FranchiserLens.sol";
 import {Utils} from "./Utils.sol";
 
-import {console} from "forge-std/console.sol";
-
 /// @notice Test max number of delegates.
 ///         The test is set up so that at the end of delegation, each subdelegate
 ///         will have 1 token as voting power.
@@ -233,17 +231,8 @@ contract FranchiserBenchmarkTest is Test, IFranchiserErrors, IFranchiserEvents {
     }
 
     function testMaxDelegatesRecallBenchmark() public {
-        // TODO: Validate all delegations are correct
-        // DelegationWithVotes[][] memory delegations = franchiserLens .getAllDelegations(franchiserLevelOne);
-
         // Recall
         franchiserFactory.recall(Utils.bob, Utils.alice);
-
-        // // Check balances
-        // assertEq(votingToken.balanceOf(Utils.alice), INITIAL_VOTES);
-
-        // /// Check votes
-        // assertEq(votingToken.getVotes(Utils.alice), 0);
     }
 
     function _getNextAccount() internal returns (address) {
