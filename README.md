@@ -8,6 +8,7 @@
 - `forge build`
 - `forge test --no-match-contract Integration`
 - `forge test --match-contract Integration --fork-url $FORK_URL`
+- `forge snapshot --no-match-contract Integration`
 
 ## Deploying
 
